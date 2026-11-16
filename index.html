@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f3d3e">
+<title>Sổ đơn Shopee — đơn giá thực tế</title>
+<style>
+:root{
+  --ink:#12262a; --muted:#5d7176; --line:#d8e1e2; --bg:#f3f6f5; --card:#fff;
+  --brand:#0f3d3e; --accent:#e2603a; --good:#1c7c54; --warn:#a15c00; --bad:#b3261e;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+header{background:var(--brand);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:18px;font-weight:650;letter-spacing:.2px}
+header p{margin:2px 0 0;font-size:12.5px;opacity:.75}
+main{max-width:640px;margin:0 auto;padding:14px 12px calc(92px + env(safe-area-inset-bottom))}
+section{display:none} section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:15px}
+label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px}
+input[type=text],input[type=password],input[type=url],input[type=search]{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
+input:focus{outline:2px solid #7fb7b0;outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+button{font:inherit;border:0;border-radius:11px;padding:12px 14px;font-weight:600;cursor:pointer;min-height:46px}
+.pri{background:var(--accent);color:#fff;width:100%}
+.sec{background:#e4eceb;color:var(--brand);width:100%}
+.ghost{background:transparent;color:var(--brand);padding:8px 10px;min-height:38px}
+.danger{color:var(--bad)}
+button:disabled{opacity:.5}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;
+  border:2px dashed #9fb9b6;border-radius:var(--r);padding:22px 12px;color:var(--brand);background:#f7fbfa}
+.drop b{font-size:16px} .drop small{color:var(--muted)}
+.thumbs{display:flex;gap:8px;overflow-x:auto;margin-top:10px}
+.thumbs img{height:92px;border-radius:8px;border:1px solid var(--line)}
+.item{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px;background:#fbfcfc}
+.item .top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted)}
+.calc{display:flex;justify-content:space-between;gap:8px;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font-size:13.5px}
+.calc b{color:var(--good);font-variant-numeric:tabular-nums}
+.sum{font-size:14px} .sum div{display:flex;justify-content:space-between;padding:3px 0;font-variant-numeric:tabular-nums}
+.sum .big{font-weight:700;font-size:16px;border-top:1px solid var(--line);margin-top:4px;padding-top:8px}
+.note{font-size:13px;border-radius:10px;padding:9px 11px;margin-top:10px}
+.note.ok{background:#e5f4ec;color:var(--good)} .note.warn{background:#fff3dc;color:var(--warn)} .note.bad{background:#fde8e6;color:var(--bad)}
+.order{padding:0;overflow:hidden}
+.order .head{padding:12px 14px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.order .head b{display:block;font-size:15px} .order .head small{color:var(--muted)}
+.order .paid{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.line{padding:9px 14px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:14px}
+.line small{color:var(--muted);grid-column:1} .line .u{grid-row:1/span 2;grid-column:2;text-align:right;align-self:center}
+.line .u b{display:block;color:var(--good);font-variant-numeric:tabular-nums} .line .u s{color:var(--muted);font-size:12px}
+.acts{display:flex;justify-content:flex-end;border-top:1px solid var(--line);background:#fafcfc}
+.bar{display:flex;gap:8px;margin-bottom:12px}
+.empty{text-align:center;color:var(--muted);padding:34px 10px}
+nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;
+  padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;background:none;border-radius:0;color:var(--muted);font-size:12.5px;font-weight:600;padding:9px 4px 10px;min-height:58px}
+nav button span{display:block;font-size:20px;line-height:1.1}
+nav button.on{color:var(--accent)}
+#toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#12262a;color:#fff;
+  padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center;z-index:9}
+#toast.on{opacity:1}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid #fff;border-right-color:transparent;border-radius:50%;
+  animation:sp .7s linear infinite;vertical-align:-3px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+ol{padding-left:20px;margin:6px 0;font-size:14px} ol li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Sổ đơn Shopee</h1>
+  <p>Đơn giá thực tế sau voucher &amp; xu — chia đều theo số món</p>
+</header>
+
+<main>
+  <!-- THÊM ĐƠN -->
+  <section id="tab-add" class="on">
+    <div class="card">
+      <h2 id="formTitle">1. Ảnh chụp màn hình đơn hàng</h2>
+      <label class="drop" for="file">
+        <b>＋ Chọn ảnh chụp màn hình</b>
+        <small>Chọn được nhiều ảnh nếu đơn dài. Ảnh chỉ dùng để đọc, không được lưu.</small>
+      </label>
+      <input id="file" type="file" accept="image/*" multiple hidden>
+      <div class="thumbs" id="thumbs"></div>
+      <button class="pri" id="btnRead" style="margin-top:12px" disabled>Đọc ảnh và điền tự động</button>
+      <button class="ghost" id="btnManual" style="width:100%;margin-top:4px">Hoặc nhập tay không cần ảnh</button>
+    </div>
+
+    <div id="formWrap" hidden>
+      <div class="card">
+        <h2>2. Kiểm tra thông tin đơn</h2>
+        <div class="row">
+          <div><label>Mã đơn</label><input type="text" data-o="maDon" placeholder="Để trống sẽ tự tạo"></div>
+          <div><label>Ngày đặt</label><input type="text" data-o="ngay" placeholder="dd/mm/yyyy"></div>
+        </div>
+        <label>Shop</label><input type="text" data-o="shop">
+        <div class="row3">
+          <div><label>Shopee Voucher</label><input type="text" inputmode="numeric" data-o="sv" data-n></div>
+          <div><label>Voucher Shop</label><input type="text" inputmode="numeric" data-o="vs" data-n></div>
+          <div><label>Shopee Xu</label><input type="text" inputmode="numeric" data-o="xu" data-n></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>3. Sản phẩm</h2>
+        <div id="items"></div>
+        <button class="sec" id="btnAddItem" style="margin-top:12px">＋ Thêm sản phẩm</button>
+      </div>
+
+      <div class="card">
+        <h2>4. Kết quả</h2>
+        <div class="sum" id="sum"></div>
+        <div id="check"></div>
+        <button class="pri" id="btnSave" style="margin-top:14px">Lưu vào Google Sheets</button>
+        <button class="ghost danger" id="btnCancel" style="width:100%;margin-top:4px">Huỷ, làm lại</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DANH SÁCH -->
+  <section id="tab-list">
+    <div class="bar">
+      <input type="search" id="q" placeholder="Tìm sản phẩm, shop, mã đơn…">
+    </div>
+    <div class="bar">
+      <button class="sec" id="btnReload">↻ Tải lại</button>
+      <button class="sec" id="btnXlsx">⬇ Tải Excel</button>
+    </div>
+    <div id="list"></div>
+  </section>
+
+  <!-- CÀI ĐẶT -->
+  <section id="tab-set">
+    <div class="card">
+      <h2>Kết nối Google Sheets</h2>
+      <label>Địa chỉ Web App (Apps Script, kết thúc bằng /exec)</label>
+      <input type="url" id="setUrl" placeholder="https://script.google.com/macros/s/…/exec">
+      <label>Mã PIN (đúng với APP_PIN đã đặt)</label>
+      <input type="password" id="setPin" autocomplete="off">
+      <button class="pri" id="btnSaveSet" style="margin-top:14px">Lưu và kiểm tra kết nối</button>
+      <div id="setMsg"></div>
+    </div>
+    <div class="card">
+      <h2>Cách hoạt động</h2>
+      <ol>
+        <li>Ảnh được thu nhỏ trên máy, gửi tới Apps Script của bạn, chuyển cho Gemini đọc rồi bỏ. Không ảnh nào được lưu.</li>
+        <li>Dữ liệu đơn hàng nằm trong sheet <b>Đơn hàng</b> của Google Sheet của bạn.</li>
+        <li>Địa chỉ và PIN chỉ lưu trên trình duyệt của máy này.</li>
+        <li>Voucher và xu của đơn được chia đều cho từng món (mỗi dòng sản phẩm là một món), giống bảng tính gốc.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-tab="add" class="on"><span>＋</span>Thêm đơn</button>
+  <button data-tab="list"><span>☰</span>Sổ đơn</button>
+  <button data-tab="set"><span>⚙</span>Cài đặt</button>
+</nav>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10); return isFinite(n) ? n : 0; };
+const vnd = n => Math.round(n).toLocaleString('vi-VN') + 'đ';
+const fmtIn = n => n ? Number(n).toLocaleString('vi-VN') : '';
+
+/* ---------- Chia đều voucher & xu theo số món (dòng) trong đơn ---------- */
+function compute(order) {
+  const total = order.items.reduce((s, it) => s + it.sl * it.gia, 0);
+  const lines = order.items.map(it => {
+    const line = it.sl * it.gia;
+    const n = order.items.length;
+    const voucher = (order.sv + order.vs) / n;
+    const xu = order.xu / n;
+    const net = line - voucher - xu;
+    return { line, voucher, xu, net, unit: it.sl > 0 ? net / it.sl : 0 };
+  });
+  return { total, lines, paid: total - order.sv - order.vs - order.xu };
+}
+
+/* ---------- Cài đặt & gọi máy chủ ---------- */
+const store = {
+  get(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+let cfg = { url: store.get('sds_url'), pin: store.get('sds_pin') };
+
+async function api(action, data) {
+  if (!cfg.url) { go('set'); throw new Error('Chưa kết nối Google Sheets. Hãy điền mục Cài đặt.'); }
+  let res;
+  try {
+    res = await fetch(cfg.url, { method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action, pin: cfg.pin }, data || {})) });
+  } catch (e) { throw new Error('Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web App.'); }
+  let j;
+  try { j = await res.json(); } catch (e) { throw new Error('Máy chủ trả lời không hợp lệ. Kiểm tra lại địa chỉ Web App và quyền truy cập "Anyone".'); }
+  if (!j.ok) { const er = new Error(j.error || 'Lỗi không rõ'); er.code = j.code; throw er; }
+  return j;
+}
+
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3200); }
+function busy(btn, on, label) {
+  if (on) { btn.dataset.l = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="spin"></i>' + label; }
+  else { btn.disabled = false; btn.innerHTML = btn.dataset.l; }
+}
+
+/* ---------- Điều hướng ---------- */
+function go(tab) {
+  $$('section').forEach(s => s.classList.toggle('on', s.id === 'tab-' + tab));
+  $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  if (tab === 'list' && !rows) loadList();
+  window.scrollTo(0, 0);
+}
+$$('nav button').forEach(b => b.onclick = () => go(b.dataset.tab));
+
+/* ---------- Ảnh ---------- */
+let images = [];   // {mime, data(base64)} — chỉ nằm trong bộ nhớ, bỏ sau khi đọc
+function shrink(file) {
+  return new Promise((ok, fail) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 1200 / img.width, 7000 / img.height);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      const d = c.toDataURL('image/jpeg', 0.85);
+      ok({ mime: 'image/jpeg', data: d.split(',')[1], preview: d });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); fail(new Error('Không mở được ảnh ' + file.name)); };
+    img.src = url;
+  });
+}
+$('#file').onchange = async e => {
+  try {
+    images = await Promise.all(Array.from(e.target.files).slice(0, 6).map(shrink));
+    $('#thumbs').innerHTML = images.map(i => '<img alt="" src="' + i.preview + '">').join('');
+    $('#btnRead').disabled = !images.length;
+  } catch (er) { toast(er.message); }
+  e.target.value = '';
+};
+function clearImages() { images = []; $('#thumbs').innerHTML = ''; $('#btnRead').disabled = true; }
+
+$('#btnRead').onclick = async () => {
+  const b = $('#btnRead');
+  busy(b, true, 'Đang đọc ảnh…');
+  try {
+    const j = await api('extract', { images: images.map(i => ({ mime: i.mime, data: i.data })) });
+    openForm(j.order, null);
+    clearImages();
+    toast('Đã điền xong. Hãy kiểm tra lại các con số.');
+  } catch (er) { toast(er.message); }
+  busy(b, false);
+};
+$('#btnManual').onclick = () => openForm({ items: [{}] }, null);
+
+/* ---------- Form đơn hàng ---------- */
+let draft = null, editingId = null;
+function openForm(o, originalId) {
+  editingId = originalId;
+  draft = {
+    maDon: o.maDon || '', ngay: o.ngay || '', shop: o.shop || '',
+    sv: num(o.sv), vs: num(o.vs), xu: num(o.xu),
+    ship: num(o.ship), thanhTien: num(o.thanhTien),
+    items: (o.items && o.items.length ? o.items : [{}]).map(it => ({
+      ten: it.ten || '', phanLoai: it.phanLoai || '', sl: num(it.sl) || 1, gia: num(it.gia) }))
+  };
+  $$('[data-o]').forEach(i => { const v = draft[i.dataset.o]; i.value = ('n' in i.dataset) ? fmtIn(v) : v; });
+  renderItems(); recalc();
+  $('#formWrap').hidden = false;
+  $('#btnSave').textContent = editingId ? 'Lưu thay đổi' : 'Lưu vào Google Sheets';
+  go('add');
+}
+function closeForm() { draft = null; editingId = null; $('#formWrap').hidden = true; clearImages(); }
+$('#btnCancel').onclick = closeForm;
+
+$$('[data-o]').forEach(i => i.oninput = () => {
+  if (!draft) return;
+  if ('n' in i.dataset) { draft[i.dataset.o] = num(i.value); i.value = fmtIn(draft[i.dataset.o]); }
+  else draft[i.dataset.o] = i.value;
+  recalc();
+});
+
+function renderItems() {
+  $('#items').innerHTML = draft.items.map((it, k) => `
+    <div class="item" data-k="${k}">
+      <div class="top"><span>Món ${k + 1}</span>
+        ${draft.items.length > 1 ? '<button class="ghost danger" data-del>Xoá</button>' : ''}</div>
+      <label>Tên sản phẩm</label><input type="text" data-f="ten" value="${esc(it.ten)}">
+      <label>Phân loại</label><input type="text" data-f="phanLoai" value="${esc(it.phanLoai)}">
+      <div class="row">
+        <div><label>Số lượng</label><input type="text" inputmode="numeric" data-f="sl" data-n value="${it.sl}"></div>
+        <div><label>Giá mua 1 món (đ)</label><input type="text" inputmode="numeric" data-f="gia" data-n value="${fmtIn(it.gia)}"></div>
+      </div>
+      <div class="calc"><span>Đơn giá thực tế sau giảm</span><b data-unit>—</b></div>
+    </div>`).join('');
+}
+$('#items').addEventListener('input', e => {
+  const f = e.target.dataset.f; if (!f) return;
+  const it = draft.items[+e.target.closest('.item').dataset.k];
+  if ('n' in e.target.dataset) { it[f] = num(e.target.value); if (f === 'gia') e.target.value = fmtIn(it[f]); }
+  else it[f] = e.target.value;
+  recalc();
+});
+$('#items').addEventListener('click', e => {
+  if (!('del' in e.target.dataset)) return;
+  draft.items.splice(+e.target.closest('.item').dataset.k, 1); renderItems(); recalc();
+});
+$('#btnAddItem').onclick = () => { draft.items.push({ ten: '', phanLoai: '', sl: 1, gia: 0 }); renderItems(); recalc(); };
+
+function recalc() {
+  const c = compute(draft);
+  $$('#items [data-unit]').forEach((el, k) => {
+    const l = c.lines[k];
+    el.textContent = l && l.line > 0 ? vnd(l.unit) + (draft.items[k].sl > 1 ? ' / món' : '') : '—';
+  });
+  $('#sum').innerHTML =
+    `<div><span>Tổng tiền hàng</span><span>${vnd(c.total)}</span></div>
+     <div><span>Shopee Voucher</span><span>−${vnd(draft.sv)}</span></div>
+     <div><span>Voucher Shop</span><span>−${vnd(draft.vs)}</span></div>
+     <div><span>Shopee Xu</span><span>−${vnd(draft.xu)}</span></div>
+     <div class="big"><span>Thực trả cho hàng</span><span>${vnd(c.paid)}</span></div>`;
+  let h = '';
+  if (c.paid >= 0 && c.lines.some(l => l.line > 0 && l.net < 0)) h += '<div class="note warn">Có món rẻ hơn phần voucher chia đều nên đơn giá ra số âm. Tổng cả đơn vẫn đúng.</div>';
+  if (c.paid < 0) h += '<div class="note bad">Tổng giảm lớn hơn tiền hàng. Kiểm tra lại voucher và giá.</div>';
+  if (draft.thanhTien) {
+    const expect = c.paid + draft.ship, diff = draft.thanhTien - expect;
+    h += Math.abs(diff) <= 1
+      ? `<div class="note ok">Khớp với "Thành tiền" trong ảnh: ${vnd(draft.thanhTien)}${draft.ship ? ' (gồm ' + vnd(draft.ship) + ' phí vận chuyển)' : ''}.</div>`
+      : `<div class="note warn">"Thành tiền" trong ảnh là ${vnd(draft.thanhTien)}, còn số tính ra${draft.ship ? ' (cộng ' + vnd(draft.ship) + ' phí vận chuyển)' : ''} là ${vnd(expect)}, lệch ${vnd(Math.abs(diff))}. Hãy soát lại các ô.</div>`;
+  }
+  $('#check').innerHTML = h;
+}
+
+$('#btnSave').onclick = async () => {
+  const items = draft.items.filter(it => it.ten.trim() || it.gia);
+  if (!items.length) return toast('Chưa có sản phẩm nào.');
+  if (items.some(it => !it.gia || !it.sl)) return toast('Mỗi món cần có số lượng và giá mua.');
+  const order = { maDon: draft.maDon.trim(), ngay: draft.ngay.trim(), shop: draft.shop.trim(),
+    sv: draft.sv, vs: draft.vs, xu: draft.xu, items };
+  const b = $('#btnSave'); busy(b, true, 'Đang lưu…');
+  try {
+    let j;
+    try { j = await api('save', { order, originalId: editingId || '' }); }
+    catch (er) {
+      if (er.code !== 'DUP' || !confirm(er.message + '\nGhi đè đơn cũ?')) throw er;
+      j = await api('save', { order, originalId: editingId || '', replace: true });
+    }
+    busy(b, false); closeForm(); rows = null;
+    toast('Đã lưu đơn ' + j.id); go('list');
+    return;
+  } catch (er) { toast(er.message); }
+  busy(b, false);
+};
+
+/* ---------- Sổ đơn ---------- */
+let rows = null;
+function group(rs) {
+  const map = new Map();
+  rs.forEach(r => {
+    if (!map.has(r.maDon)) map.set(r.maDon, { maDon: r.maDon, ngay: r.ngay, shop: r.shop, sv: r.sv, vs: r.vs, xu: r.xu, items: [] });
+    map.get(r.maDon).items.push({ ten: r.ten, phanLoai: r.phanLoai, sl: r.sl, gia: r.gia });
+  });
+  return Array.from(map.values()).reverse();   // đơn mới nhất lên đầu
+}
+async function loadList() {
+  $('#list').innerHTML = '<div class="empty">Đang tải…</div>';
+  try { rows = (await api('list')).rows; renderList(); }
+  catch (er) { $('#list').innerHTML = '<div class="empty">' + esc(er.message) + '</div>'; }
+}
+function renderList() {
+  const q = $('#q').value.trim().toLowerCase();
+  let orders = group(rows || []);
+  if (q) orders = orders.filter(o => (o.maDon + ' ' + o.shop + ' ' + o.items.map(i => i.ten + ' ' + i.phanLoai).join(' ')).toLowerCase().includes(q));
+  if (!orders.length) { $('#list').innerHTML = '<div class="empty">' + (q ? 'Không tìm thấy.' : 'Chưa có đơn nào. Hãy thêm đơn đầu tiên.') + '</div>'; return; }
+  $('#list').innerHTML = orders.map(o => {
+    const c = compute(o);
+    return `<div class="card order">
+      <div class="head"><div><b>${esc(o.shop || '(chưa có tên shop)')}</b><small>${esc(o.maDon)}${o.ngay ? ' · ' + esc(o.ngay) : ''}</small></div>
+        <div class="paid">${vnd(c.paid)}</div></div>
+      ${o.items.map((it, k) => `<div class="line">
+        <span>${esc(it.ten)}${it.sl > 1 ? ' ×' + it.sl : ''}</span><small>${esc(it.phanLoai)}</small>
+        <div class="u"><b>${vnd(c.lines[k].unit)}</b><s>${vnd(it.gia)}</s></div></div>`).join('')}
+      <div class="acts"><button class="ghost" data-edit="${esc(o.maDon)}">Sửa</button>
+        <button class="ghost danger" data-rm="${esc(o.maDon)}">Xoá</button></div></div>`;
+  }).join('');
+}
+$('#q').oninput = renderList;
+$('#btnReload').onclick = loadList;
+$('#list').addEventListener('click', async e => {
+  const ed = e.target.dataset.edit, rm = e.target.dataset.rm;
+  if (ed) { const o = group(rows).find(x => x.maDon === ed); if (o) openForm(o, o.maDon); }
+  if (rm && confirm('Xoá đơn ' + rm + ' khỏi Google Sheets?')) {
+    try { await api('delete', { id: rm }); rows = rows.filter(r => r.maDon !== rm); renderList(); toast('Đã xoá.'); }
+    catch (er) { toast(er.message); }
+  }
+});
+
+/* ---------- Tải Excel (đúng bố cục bảng gốc, có công thức) ---------- */
+function buildSheetAoa(rs) {
+  // Trả về mảng ô theo bố cục: tiêu đề dòng 1, hướng dẫn dòng 2, đầu cột dòng 4, dữ liệu từ dòng 5.
+  const head = ['Mã đơn','Ngày đặt','Shop','Tên sản phẩm','Phân loại','SL','Giá mua (đ/món)','Shopee Voucher (đ/đơn)',
+    'Voucher Shop (đ/đơn)','Shopee Xu (đ/đơn)','Số món/đơn [Auto]','Voucher chia đều/món [Auto]','Xu chia đều/món [Auto]',
+    'Thành tiền thực trả [Auto]','Đơn giá thực tế sau giảm [Auto]'];
+  const first = 5, last = Math.max(first, first + rs.length - 1);
+  const byId = {}; group(rs).forEach(o => byId[o.maDon] = compute(o));
+  const seen = {};
+  const data = rs.map((r, i) => {
+    const n = first + i, k = seen[r.maDon] = (seen[r.maDon] == null ? 0 : seen[r.maDon] + 1);
+    const c = byId[r.maDon], l = c.lines[k];
+    return [r.maDon, r.ngay, r.shop, r.ten, r.phanLoai, r.sl, r.gia, r.sv, r.vs, r.xu,
+      { t: 'n', v: c.lines.length, f: `COUNTIF($A$${first}:$A$${last},A${n})` },
+      { t: 'n', v: l.voucher, f: `(H${n}+I${n})/K${n}` },
+      { t: 'n', v: l.xu, f: `J${n}/K${n}` },
+      { t: 'n', v: l.net, f: `F${n}*G${n}-L${n}-M${n}` },
+      { t: 'n', v: l.unit, f: `IF(F${n}=0,"",N${n}/F${n})` }];
+  });
+  return [['BẢNG TÍNH ĐƠN GIÁ THỰC TẾ & PHÂN BỔ VOUCHER SHOPEE'],
+    ['Voucher và Xu của mỗi đơn được chia đều theo số món trong đơn. Các cột [Auto] là công thức.'],
+    [], head].concat(data);
+}
+function loadScript(src) {
+  return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok;
+    s.onerror = () => fail(new Error('Không tải được thư viện Excel. Kiểm tra mạng.')); document.head.appendChild(s); });
+}
+$('#btnXlsx').onclick = async () => {
+  const b = $('#btnXlsx'); busy(b, true, 'Đang tạo…');
+  try {
+    if (!rows) rows = (await api('list')).rows;
+    if (!rows.length) throw new Error('Chưa có dữ liệu để tải.');
+    if (!window.XLSX) await loadScript('https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js');
+    const ws = XLSX.utils.aoa_to_sheet(buildSheetAoa(rows));
+    ws['!cols'] = [16, 12, 24, 38, 28, 6, 14, 16, 16, 14, 16, 16, 14, 18, 20].map(w => ({ wch: w }));
+    Object.keys(ws).forEach(a => { if (a[0] !== '!' && ws[a].t === 'n' && /^[G-O]/.test(a)) ws[a].z = '#,##0'; });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Chi tiết đơn hàng');
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    XLSX.writeFile(wb, `shopee_don_gia_thuc_te_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}.xlsx`);
+  } catch (er) { toast(er.message); }
+  busy(b, false);
+};
+
+/* ---------- Cài đặt ---------- */
+$('#setUrl').value = cfg.url; $('#setPin').value = cfg.pin;
+$('#btnSaveSet').onclick = async () => {
+  cfg = { url: $('#setUrl').value.trim(), pin: $('#setPin').value.trim() };
+  store.set('sds_url', cfg.url); store.set('sds_pin', cfg.pin);
+  const b = $('#btnSaveSet'); busy(b, true, 'Đang kiểm tra…');
+  try { await api('ping'); $('#setMsg').innerHTML = '<div class="note ok">Kết nối thành công.</div>'; rows = null; }
+  catch (er) { $('#setMsg').innerHTML = '<div class="note bad">' + esc(er.message) + '</div>'; }
+  busy(b, false);
+};
+if (!cfg.url) go('set');
+</script>
+</body>
+</html>
