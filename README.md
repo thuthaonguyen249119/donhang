@@ -94,7 +94,9 @@ function deleteById_(sh, id) {
 }
 
 function int_(v) {
-  const n = Math.round(Number(String(v == null ? '' : v).replace(/[^\d.-]/g, '')));
+  // Số thật thì làm tròn; chuỗi như "150.000đ" / "150,000" thì bỏ hết ký tự không phải số
+  // (dấu chấm ở VN là phân cách hàng nghìn, không phải dấu thập phân).
+  const n = typeof v === 'number' ? Math.round(v) : parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10);
   return isFinite(n) && n > 0 ? n : 0;
 }
 
@@ -198,11 +200,17 @@ function extract_(images, props) {
 
   const data = JSON.parse(text);
   const cand = data.candidates && data.candidates[0];
-  if (!cand || !cand.content || !cand.content.parts) throw new Error('Gemini không trả về nội dung.');
+  if (!cand || !cand.content || !cand.content.parts) {
+    const why = (cand && cand.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) || '';
+    throw new Error('Gemini không trả về nội dung' + (why ? ' (' + why + ')' : '') + '. Thử lại hoặc dùng ảnh rõ hơn.');
+  }
   let raw = cand.content.parts.filter(function (p) { return p.text && !p.thought; })
     .map(function (p) { return p.text; }).join('');
   raw = raw.replace(/^\s*```(?:json)?/i, '').replace(/```\s*$/, '').trim();
-  let o = JSON.parse(raw);
+  const m = raw.match(/[\[{][\s\S]*[\]}]/);
+  let o;
+  try { o = JSON.parse(m ? m[0] : raw); }
+  catch (e) { throw new Error('Không hiểu kết quả Gemini trả về, hãy thử lại: ' + raw.slice(0, 150)); }
   if (Array.isArray(o)) o = o[0] || {};
 
   return {

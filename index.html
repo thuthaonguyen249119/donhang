@@ -88,6 +88,7 @@ ol{padding-left:20px;margin:6px 0;font-size:14px} ol li{margin:4px 0}
       <input id="file" type="file" accept="image/*" multiple hidden>
       <div class="thumbs" id="thumbs"></div>
       <button class="pri" id="btnRead" style="margin-top:12px" disabled>Đọc ảnh và điền tự động</button>
+      <div id="readMsg"></div>
       <button class="ghost" id="btnManual" style="width:100%;margin-top:4px">Hoặc nhập tay không cần ảnh</button>
     </div>
 
@@ -247,20 +248,26 @@ $('#file').onchange = async e => {
     images = await Promise.all(Array.from(e.target.files).slice(0, 6).map(shrink));
     $('#thumbs').innerHTML = images.map(i => '<img alt="" src="' + i.preview + '">').join('');
     $('#btnRead').disabled = !images.length;
-  } catch (er) { toast(er.message); }
+    $('#readMsg').innerHTML = '';
+  } catch (er) { showReadErr(er.message); }
   e.target.value = '';
 };
-function clearImages() { images = []; $('#thumbs').innerHTML = ''; $('#btnRead').disabled = true; }
+function clearImages() { images = []; $('#thumbs').innerHTML = ''; $('#btnRead').disabled = true; $('#readMsg').innerHTML = ''; }
+function showReadErr(msg) { $('#readMsg').innerHTML = '<div class="note bad">' + esc(msg) + '</div>'; toast(msg); }
 
 $('#btnRead').onclick = async () => {
   const b = $('#btnRead');
   busy(b, true, 'Đang đọc ảnh…');
+  $('#readMsg').innerHTML = '';
   try {
     const j = await api('extract', { images: images.map(i => ({ mime: i.mime, data: i.data })) });
+    if (!j.order) throw new Error('Máy chủ không trả về dữ liệu đơn. Có thể Apps Script đang chạy bản cũ: hãy Deploy > Manage deployments > Edit > New version.');
+    busy(b, false);
     openForm(j.order, null);
     clearImages();
     toast('Đã điền xong. Hãy kiểm tra lại các con số.');
-  } catch (er) { toast(er.message); }
+    return;
+  } catch (er) { showReadErr(er.message); }
   busy(b, false);
 };
 $('#btnManual').onclick = () => openForm({ items: [{}] }, null);
