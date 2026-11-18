@@ -1,4 +1,3 @@
-# donhang
 /**
  * SỔ ĐƠN SHOPEE — backend chạy trên Google Apps Script, gắn với 1 Google Sheet.
  * - Google Sheet là cơ sở dữ liệu (sheet "Đơn hàng").
