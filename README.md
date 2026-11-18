@@ -11,7 +11,7 @@
  *   GEMINI_MODEL    tên model, mặc định "gemini-flash-latest"
  */
 
-const SCRIPT_VERSION = '2026-11-18';   // app dùng số này để biết Apps Script có phải bản mới nhất
+const SCRIPT_VERSION = '2026-11-18b';   // app dùng số này để biết Apps Script có phải bản mới nhất
 const SHEET_NAME = 'Đơn hàng';
 const HEADERS = [
   'Mã đơn', 'Ngày đặt', 'Shop', 'Tên sản phẩm', 'Phân loại', 'SL', 'Giá mua (đ/món)',
@@ -189,15 +189,10 @@ function extract_(images, props) {
   });
   const body = { contents: [{ parts: parts }], generationConfig: { responseMimeType: 'application/json' } };
 
-  let model = String(props.getProperty('GEMINI_MODEL') || '').trim() || 'gemini-flash-latest';
-  let res = callGemini_(model, key, body);
-  if (res.getResponseCode() === 404) {            // tên model đã đổi: tự tìm model flash đang có
-    model = pickModel_(key);
-    res = callGemini_(model, key, body);
-  }
-  const code = res.getResponseCode();
-  const text = res.getContentText();
-  if (code !== 200) throw new Error(explainGemini_(code, text));
+  const r = geminiSmart_(key, body, String(props.getProperty('GEMINI_MODEL') || '').trim());
+  const code = r.res.getResponseCode();
+  const text = r.res.getContentText();
+  if (code !== 200) throw new Error(explainGemini_(code, text) + (r.tried.length > 1 ? ' Đã thử: ' + r.tried.join(', ') + '.' : ''));
 
   const data = JSON.parse(text);
   const cand = data.candidates && data.candidates[0];
@@ -225,6 +220,39 @@ function extract_(images, props) {
         sl: int_(it.sl) || 1, gia: int_(it.gia_mua) };
     })
   };
+}
+
+const DEFAULT_MODEL = 'gemini-flash-latest';
+// Model dự phòng khi model chính quá tải (503) hoặc hết lượt (429). Lite đọc chữ trong ảnh vẫn tốt.
+const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+
+/** Gọi Gemini, tự thử lại khi quá tải và tự đổi sang model dự phòng. Trả về {res, model, tried}. */
+function geminiSmart_(key, body, preferred) {
+  const list = [preferred || DEFAULT_MODEL].concat(FALLBACK_MODELS)
+    .filter(function (m, i, a) { return m && a.indexOf(m) === i; });
+  const tried = [];
+  let res = null, model = list[0];
+  for (let i = 0; i < list.length; i++) {
+    model = list[i];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      res = callGemini_(model, key, body);
+      const c = res.getResponseCode();
+      if (c === 200) return { res: res, model: model, tried: tried };
+      if (attempt === 0 && (c === 500 || c === 503 || c === 504)) { Utilities.sleep(2500); continue; }  // bận tạm thời: đợi rồi thử lại 1 lần
+      break;
+    }
+    const code = res.getResponseCode();
+    tried.push(model + ' (' + code + ')');
+    // Chỉ đổi model khi lỗi do model (quá tải, hết lượt, không tồn tại). Lỗi key/quyền thì đổi model cũng vô ích.
+    if ([404, 429, 500, 503, 504].indexOf(code) === -1) break;
+  }
+  if (res.getResponseCode() === 404) {            // mọi tên model đều đã đổi: tự tìm model flash đang có
+    model = pickModel_(key);
+    res = callGemini_(model, key, body);
+    if (res.getResponseCode() === 200) return { res: res, model: model, tried: tried };
+    tried.push(model + ' (' + res.getResponseCode() + ')');
+  }
+  return { res: res, model: model, tried: tried };
 }
 
 function callGemini_(model, key, body) {
@@ -258,6 +286,7 @@ function explainGemini_(code, text) {
   if (code === 429) return /limit: 0/.test(msg)
     ? 'Model này không có lượt miễn phí cho key của bạn (limit 0). Đặt GEMINI_MODEL = gemini-2.5-flash trong Script Properties, hoặc bật thanh toán cho project.'
     : 'Gemini báo hết lượt miễn phí tạm thời, thử lại sau ít phút.';
+  if (code === 500 || code === 503 || code === 504) return 'Máy chủ Gemini của Google đang quá tải (' + code + '). Script đã tự thử lại và đổi model nhưng vẫn bận. Đợi 1–2 phút rồi bấm đọc lại.';
   if (code === 404) return 'Không tìm thấy model Gemini. Xoá GEMINI_MODEL trong Script Properties để script tự chọn model. Chi tiết: ' + msg;
   return 'Gemini lỗi ' + code + ': ' + msg;
 }
@@ -280,26 +309,22 @@ function diag_(props) {
     (raw !== key ? ' Có khoảng trắng thừa, script đã tự bỏ.' : '') +
     (/^AIza/.test(key) ? '' : ' Key Gemini thường bắt đầu bằng "AIza" và dài 39 ký tự: có thể bạn dán nhầm.'));
 
-  let model = String(props.getProperty('GEMINI_MODEL') || '').trim() || 'gemini-flash-latest';
+  const preferred = String(props.getProperty('GEMINI_MODEL') || '').trim();
   const body = { contents: [{ parts: [{ text: 'Trả về đúng JSON {"ok":true}' }] }],
     generationConfig: { responseMimeType: 'application/json' } };
-  let res, t0 = Date.now();
-  try { res = callGemini_(model, key, body); }
+  const t0 = Date.now();
+  let r;
+  try { r = geminiSmart_(key, body, preferred); }
   catch (e) {
     add(false, 'Quyền gọi Gemini', String(e && e.message || e) +
       ' → Trong trình soạn Apps Script, chọn hàm caiDat, bấm Chạy và cấp quyền, rồi Deploy > Manage deployments > Edit > New version.');
     return done();
   }
-  if (res.getResponseCode() === 404) {
-    try {
-      const alt = pickModel_(key);
-      add(false, 'Model', '"' + model + '" không tồn tại, script tự chuyển sang "' + alt + '". Nên xoá hoặc sửa GEMINI_MODEL.');
-      model = alt; t0 = Date.now(); res = callGemini_(model, key, body);
-    } catch (e) { add(false, 'Model', String(e && e.message || e)); return done(); }
-  }
-  const code = res.getResponseCode();
-  if (code === 200) add(true, 'Gọi thử Gemini', 'Model ' + model + ' trả lời sau ' + ((Date.now() - t0) / 1000).toFixed(1) + ' giây. Đọc ảnh sẽ hoạt động.');
-  else add(false, 'Gọi thử Gemini', 'Model ' + model + ': ' + explainGemini_(code, res.getContentText()));
+  const code = r.res.getResponseCode();
+  const secs = ((Date.now() - t0) / 1000).toFixed(1);
+  const via = r.tried.length ? ' (model trước bận/lỗi: ' + r.tried.join(', ') + ', đã tự chuyển)' : '';
+  if (code === 200) add(true, 'Gọi thử Gemini', 'Model ' + r.model + ' trả lời sau ' + secs + ' giây' + via + '. Đọc ảnh sẽ hoạt động.');
+  else add(false, 'Gọi thử Gemini', explainGemini_(code, r.res.getContentText()) + (r.tried.length ? ' Đã thử: ' + r.tried.join(', ') + '.' : ''));
   return done();
 }
 

@@ -245,12 +245,18 @@ let cfg = { url: store.get('sds_url'), pin: store.get('sds_pin') };
 
 async function api(action, data) {
   if (!cfg.url) { go('set'); throw new Error('Chưa kết nối Google Sheets. Hãy điền mục Cài đặt.'); }
+  const body = JSON.stringify(Object.assign({ action, pin: cfg.pin }, data || {}));
+  const send = () => fetch(cfg.url, { method: 'POST', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body });
   let res;
-  try {
-    res = await fetch(cfg.url, { method: 'POST', redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(Object.assign({ action, pin: cfg.pin }, data || {})) });
-  } catch (e) { throw new Error('Không kết nối được máy chủ. Kiểm tra mạng và địa chỉ Web App.'); }
+  try { res = await send(); }
+  catch (e) {
+    // Rớt mạng thoáng qua: tự thử lại 1 lần. Không thử lại lệnh lưu/xoá để tránh ghi trùng.
+    if (!['ping', 'list', 'diag', 'extract'].includes(action)) throw new Error('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.');
+    await new Promise(r => setTimeout(r, 1500));
+    try { res = await send(); }
+    catch (e2) { throw new Error('Không kết nối được máy chủ (đã thử 2 lần). Kiểm tra mạng, hoặc địa chỉ Web App trong Cài đặt có đúng link /exec không.'); }
+  }
   let j;
   try { j = await res.json(); } catch (e) { throw new Error('Máy chủ trả lời không hợp lệ. Kiểm tra lại địa chỉ Web App và quyền truy cập "Anyone".'); }
   if (!j.ok) { const er = new Error(j.error || 'Lỗi không rõ'); er.code = j.code; throw er; }
