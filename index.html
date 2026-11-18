@@ -1,809 +1,360 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#232F3E">
-  <title>Sổ đơn Shopee — đơn giá thực tế</title>
-  <style>
-    :root {
-      --orange: #FF9900;
-      --blue: #146EB4;
-      --black: #000000;
-      --navy: #232F3E;
-      --light: #F2F2F2;
-      --ink: var(--light);
-      --muted: rgba(242, 242, 242, .62);
-      --line: rgba(255, 255, 255, .14);
-      --glass: rgba(35, 47, 62, .46);
-      --glass-2: rgba(255, 255, 255, .06);
-      --field: rgba(0, 0, 0, .28);
-      --accent: var(--orange);
-      --good: #5fd49c;
-      --warn: #FFB84D;
-      --bad: #FF7A70;
-      --blur: blur(18px) saturate(150%);
-      --r: 18px;
-      color-scheme: dark;
-    }
-
-    * {
-      box-sizing: border-box
-    }
-
-    /* Nền: các quầng sáng cam/xanh phía sau lớp kính */
-    html {
-      min-height: 100%;
-      background-color: var(--black);
-      background-attachment: fixed;
-      background-repeat: no-repeat;
-      background-image:
-        radial-gradient(38rem 30rem at 0% -5%, rgba(255, 153, 0, .55), transparent 60%),
-        radial-gradient(34rem 30rem at 105% 30%, rgba(20, 110, 180, .6), transparent 62%),
-        radial-gradient(30rem 26rem at 20% 105%, rgba(255, 153, 0, .28), transparent 60%),
-        linear-gradient(160deg, var(--navy) 0%, #121a24 55%, var(--black) 100%)
-    }
-
-    body {
-      background: transparent
-    }
-
-    html,
-    body {
-      margin: 0;
-      color: var(--ink);
-      font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      -webkit-font-smoothing: antialiased
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
-      background: rgba(35, 47, 62, .55);
-      -webkit-backdrop-filter: var(--blur);
-      backdrop-filter: var(--blur);
-      border-bottom: 1px solid var(--line)
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 19px;
-      font-weight: 700;
-      letter-spacing: .2px
-    }
-
-    header h1::before {
-      content: "";
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 9px;
-      vertical-align: 2px;
-      background: var(--orange);
-      box-shadow: 0 0 12px var(--orange)
-    }
-
-    header p {
-      margin: 3px 0 0;
-      font-size: 12.5px;
-      color: var(--muted)
-    }
-
-    main {
-      max-width: 640px;
-      margin: 0 auto;
-      padding: 16px 14px calc(100px + env(safe-area-inset-bottom))
-    }
-
-    section {
-      display: none
-    }
-
-    section.on {
-      display: block
-    }
-
-    .card {
-      background: var(--glass);
-      -webkit-backdrop-filter: var(--blur);
-      backdrop-filter: var(--blur);
-      border: 1px solid var(--line);
-      border-top-color: rgba(255, 255, 255, .24);
-      border-radius: var(--r);
-      padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .06)
-    }
-
-    .card h2 {
-      margin: 0 0 10px;
-      font-size: 15.5px;
-      font-weight: 700
-    }
-
-    label {
-      display: block;
-      font-size: 12.5px;
-      color: var(--muted);
-      margin: 10px 0 5px
-    }
-
-    input[type=text],
-    input[type=password],
-    input[type=url],
-    input[type=search] {
-      width: 100%;
-      padding: 11px 13px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      font: inherit;
-      background: var(--field);
-      color: var(--ink);
-      transition: border-color .15s, box-shadow .15s
-    }
-
-    input::placeholder {
-      color: rgba(242, 242, 242, .38)
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(255, 153, 0, .25)
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px
-    }
-
-    .row3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px
-    }
-
-    button {
-      font: inherit;
-      border: 0;
-      border-radius: 13px;
-      padding: 12px 14px;
-      font-weight: 650;
-      cursor: pointer;
-      min-height: 46px;
-      transition: transform .08s, filter .15s, background .15s
-    }
-
-    button:active {
-      transform: scale(.98)
-    }
-
-    .pri {
-      background: linear-gradient(180deg, #FFAD33, var(--orange));
-      color: var(--black);
-      width: 100%;
-      box-shadow: 0 8px 22px rgba(255, 153, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .4)
-    }
-
-    .pri:hover {
-      filter: brightness(1.05)
-    }
-
-    .sec {
-      background: rgba(20, 110, 180, .3);
-      color: var(--light);
-      width: 100%;
-      border: 1px solid rgba(20, 110, 180, .75);
-      -webkit-backdrop-filter: var(--blur);
-      backdrop-filter: var(--blur)
-    }
-
-    .sec:hover {
-      background: rgba(20, 110, 180, .45)
-    }
-
-    .ghost {
-      background: transparent;
-      color: var(--orange);
-      padding: 8px 10px;
-      min-height: 38px
-    }
-
-    .ghost:hover {
-      background: rgba(255, 255, 255, .06)
-    }
-
-    .danger {
-      color: var(--bad)
-    }
-
-    button:disabled {
-      opacity: .45;
-      box-shadow: none;
-      cursor: default
-    }
-
-    .drop {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      text-align: center;
-      cursor: pointer;
-      border: 1.5px dashed rgba(255, 153, 0, .65);
-      border-radius: var(--r);
-      padding: 24px 12px;
-      color: var(--orange);
-      background: linear-gradient(135deg, rgba(255, 153, 0, .12), rgba(20, 110, 180, .12));
-      transition: background .15s
-    }
-
-    .drop:hover {
-      background: linear-gradient(135deg, rgba(255, 153, 0, .2), rgba(20, 110, 180, .18))
-    }
-
-    .drop b {
-      font-size: 16px
-    }
-
-    .drop small {
-      color: var(--muted)
-    }
-
-    .thumbs {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      margin-top: 10px
-    }
-
-    .thumbs img {
-      height: 92px;
-      border-radius: 10px;
-      border: 1px solid var(--line)
-    }
-
-    .item {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      margin-top: 10px;
-      background: var(--glass-2)
-    }
-
-    .item .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12.5px;
-      color: var(--muted)
-    }
-
-    .calc {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      margin-top: 10px;
-      padding-top: 9px;
-      border-top: 1px dashed var(--line);
-      font-size: 13.5px
-    }
-
-    .calc b {
-      color: var(--orange);
-      font-variant-numeric: tabular-nums
-    }
-
-    .sum {
-      font-size: 14px
-    }
-
-    .sum div {
-      display: flex;
-      justify-content: space-between;
-      padding: 3px 0;
-      font-variant-numeric: tabular-nums
-    }
-
-    .sum .big {
-      font-weight: 750;
-      font-size: 17px;
-      border-top: 1px solid var(--line);
-      margin-top: 6px;
-      padding-top: 9px
-    }
-
-    .sum .big span:last-child {
-      color: var(--orange)
-    }
-
-    .note {
-      font-size: 13px;
-      border-radius: 12px;
-      padding: 9px 12px;
-      margin-top: 10px;
-      border: 1px solid
-    }
-
-    .note.ok {
-      background: rgba(95, 212, 156, .12);
-      border-color: rgba(95, 212, 156, .35);
-      color: var(--good)
-    }
-
-    .note.warn {
-      background: rgba(255, 153, 0, .12);
-      border-color: rgba(255, 153, 0, .4);
-      color: var(--warn)
-    }
-
-    .note.bad {
-      background: rgba(255, 122, 112, .12);
-      border-color: rgba(255, 122, 112, .4);
-      color: var(--bad)
-    }
-
-    .order {
-      padding: 0;
-      overflow: hidden
-    }
-
-    .order .head {
-      padding: 13px 16px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: flex-start
-    }
-
-    .order .head b {
-      display: block;
-      font-size: 15px
-    }
-
-    .order .head small {
-      color: var(--muted)
-    }
-
-    .order .paid {
-      font-weight: 750;
-      white-space: nowrap;
-      font-variant-numeric: tabular-nums;
-      color: var(--orange)
-    }
-
-    .line {
-      padding: 10px 16px;
-      border-top: 1px solid var(--line);
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 2px 10px;
-      font-size: 14px
-    }
-
-    .line small {
-      color: var(--muted);
-      grid-column: 1
-    }
-
-    .line .u {
-      grid-row: 1/span 2;
-      grid-column: 2;
-      text-align: right;
-      align-self: center
-    }
-
-    .line .u b {
-      display: block;
-      color: var(--orange);
-      font-variant-numeric: tabular-nums
-    }
-
-    .line .u s {
-      color: var(--muted);
-      font-size: 12px
-    }
-
-    .acts {
-      display: flex;
-      justify-content: flex-end;
-      border-top: 1px solid var(--line);
-      background: rgba(0, 0, 0, .18)
-    }
-
-    .bar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px
-    }
-
-    .hint {
-      margin: 0 0 12px;
-      font-size: 13px;
-      color: var(--muted)
-    }
-
-    .note b {
-      display: block;
-      margin-bottom: 2px
-    }
-
-    .empty {
-      text-align: center;
-      color: var(--muted);
-      padding: 34px 10px
-    }
-
-    nav {
-      position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: calc(10px + env(safe-area-inset-bottom));
-      max-width: 616px;
-      margin: 0 auto;
-      display: flex;
-      z-index: 6;
-      background: rgba(35, 47, 62, .6);
-      -webkit-backdrop-filter: var(--blur);
-      backdrop-filter: var(--blur);
-      border: 1px solid var(--line);
-      border-top-color: rgba(255, 255, 255, .24);
-      border-radius: 22px;
-      padding: 4px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, .45)
-    }
-
-    nav button {
-      flex: 1;
-      background: none;
-      border-radius: 18px;
-      color: var(--muted);
-      font-size: 12.5px;
-      font-weight: 650;
-      padding: 7px 4px 8px;
-      min-height: 54px
-    }
-
-    nav button span {
-      display: block;
-      font-size: 20px;
-      line-height: 1.1
-    }
-
-    nav button.on {
-      color: var(--orange);
-      background: rgba(255, 153, 0, .14)
-    }
-
-    #toast {
-      position: fixed;
-      left: 50%;
-      bottom: calc(90px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      background: rgba(35, 47, 62, .85);
-      -webkit-backdrop-filter: var(--blur);
-      backdrop-filter: var(--blur);
-      color: var(--light);
-      border: 1px solid var(--line);
-      padding: 10px 16px;
-      border-radius: 999px;
-      font-size: 14px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s;
-      max-width: 90%;
-      text-align: center;
-      z-index: 9;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .4)
-    }
-
-    #toast.on {
-      opacity: 1
-    }
-
-    .spin {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid currentColor;
-      border-right-color: transparent;
-      border-radius: 50%;
-      animation: sp .7s linear infinite;
-      vertical-align: -3px;
-      margin-right: 6px
-    }
-
-    @keyframes sp {
-      to {
-        transform: rotate(360deg)
-      }
-    }
-
-    ol {
-      padding-left: 20px;
-      margin: 6px 0;
-      font-size: 14px
-    }
-
-    ol li {
-      margin: 5px 0
-    }
-
-    ol li::marker {
-      color: var(--orange);
-      font-weight: 700
-    }
-
-    b {
-      font-weight: 700
-    }
-
-    /* Máy không hỗ trợ làm mờ nền: dùng kính đặc hơn để chữ vẫn dễ đọc */
-    @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
-
-      .card,
-      header,
-      nav,
-      #toast {
-        background: rgba(35, 47, 62, .92)
-      }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#232F3E">
+<title>Sổ đơn Shopee — đơn giá thực tế</title>
+<style>
+:root{
+  --orange:#FF9900; --blue:#146EB4; --black:#000000; --navy:#232F3E; --light:#F2F2F2;
+  --ink:var(--light); --muted:rgba(242,242,242,.62); --line:rgba(255,255,255,.14);
+  --glass:rgba(35,47,62,.46); --glass-2:rgba(255,255,255,.06); --field:rgba(0,0,0,.28);
+  --accent:var(--orange); --good:#5fd49c; --warn:#FFB84D; --bad:#FF7A70;
+  --blur:blur(18px) saturate(150%); --r:18px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+/* Nền: các quầng sáng cam/xanh phía sau lớp kính */
+html{min-height:100%;background-color:var(--black);background-attachment:fixed;background-repeat:no-repeat;
+  background-image:
+    radial-gradient(38rem 30rem at 0% -5%, rgba(255,153,0,.55), transparent 60%),
+    radial-gradient(34rem 30rem at 105% 30%, rgba(20,110,180,.6), transparent 62%),
+    radial-gradient(30rem 26rem at 20% 105%, rgba(255,153,0,.28), transparent 60%),
+    linear-gradient(160deg, var(--navy) 0%, #121a24 55%, var(--black) 100%)}
+body{background:transparent}
+html,body{margin:0;color:var(--ink);
+  font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+header{position:sticky;top:0;z-index:5;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
+  background:rgba(35,47,62,.55);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}
+header h1::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:9px;vertical-align:2px;
+  background:var(--orange);box-shadow:0 0 12px var(--orange)}
+header p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+main{max-width:640px;margin:0 auto;padding:16px 14px calc(100px + env(safe-area-inset-bottom))}
+section{display:none} section.on{display:block}
+.card{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--line);border-top-color:rgba(255,255,255,.24);border-radius:var(--r);padding:16px;margin-bottom:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06)}
+.card h2{margin:0 0 10px;font-size:15.5px;font-weight:700}
+label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 5px}
+input[type=text],input[type=password],input[type=url],input[type=search]{
+  width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:12px;font:inherit;
+  background:var(--field);color:var(--ink);transition:border-color .15s, box-shadow .15s}
+input::placeholder{color:rgba(242,242,242,.38)}
+input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,153,0,.25)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+button{font:inherit;border:0;border-radius:13px;padding:12px 14px;font-weight:650;cursor:pointer;min-height:46px;
+  transition:transform .08s, filter .15s, background .15s}
+button:active{transform:scale(.98)}
+.pri{background:linear-gradient(180deg,#FFAD33,var(--orange));color:var(--black);width:100%;
+  box-shadow:0 8px 22px rgba(255,153,0,.35), inset 0 1px 0 rgba(255,255,255,.4)}
+.pri:hover{filter:brightness(1.05)}
+.sec{background:rgba(20,110,180,.3);color:var(--light);width:100%;border:1px solid rgba(20,110,180,.75);
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+.sec:hover{background:rgba(20,110,180,.45)}
+.ghost{background:transparent;color:var(--orange);padding:8px 10px;min-height:38px}
+.ghost:hover{background:rgba(255,255,255,.06)}
+.danger{color:var(--bad)}
+button:disabled{opacity:.45;box-shadow:none;cursor:default}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;cursor:pointer;
+  border:1.5px dashed rgba(255,153,0,.65);border-radius:var(--r);padding:24px 12px;color:var(--orange);
+  background:linear-gradient(135deg, rgba(255,153,0,.12), rgba(20,110,180,.12));transition:background .15s}
+.drop:hover{background:linear-gradient(135deg, rgba(255,153,0,.2), rgba(20,110,180,.18))}
+.drop b{font-size:16px} .drop small{color:var(--muted)}
+.thumbs{display:flex;gap:8px;overflow-x:auto;margin-top:10px}
+.thumbs img{height:92px;border-radius:10px;border:1px solid var(--line)}
+.item{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px;background:var(--glass-2)}
+.item .top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted)}
+.calc{display:flex;justify-content:space-between;gap:8px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);font-size:13.5px}
+.calc b{color:var(--orange);font-variant-numeric:tabular-nums}
+.sum{font-size:14px} .sum div{display:flex;justify-content:space-between;padding:3px 0;font-variant-numeric:tabular-nums}
+.sum .big{font-weight:750;font-size:17px;border-top:1px solid var(--line);margin-top:6px;padding-top:9px}
+.sum .big span:last-child{color:var(--orange)}
+.note{font-size:13px;border-radius:12px;padding:9px 12px;margin-top:10px;border:1px solid}
+.note.ok{background:rgba(95,212,156,.12);border-color:rgba(95,212,156,.35);color:var(--good)}
+.note.warn{background:rgba(255,153,0,.12);border-color:rgba(255,153,0,.4);color:var(--warn)}
+.note.bad{background:rgba(255,122,112,.12);border-color:rgba(255,122,112,.4);color:var(--bad)}
+.order{padding:0;overflow:hidden}
+.order .head{padding:13px 16px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.order .head b{display:block;font-size:15px} .order .head small{color:var(--muted)}
+.order .paid{font-weight:750;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--orange)}
+.line{padding:10px 16px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:14px}
+.line small{color:var(--muted);grid-column:1} .line .u{grid-row:1/span 2;grid-column:2;text-align:right;align-self:center}
+.line .u b{display:block;color:var(--orange);font-variant-numeric:tabular-nums} .line .u s{color:var(--muted);font-size:12px}
+.acts{display:flex;justify-content:flex-end;border-top:1px solid var(--line);background:rgba(0,0,0,.18)}
+.bar{display:flex;gap:8px;margin-bottom:12px}
+.hint{margin:0 0 12px;font-size:13px;color:var(--muted)}
+.note b{display:block;margin-bottom:2px}
+.empty{text-align:center;color:var(--muted);padding:34px 10px}
+nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));max-width:616px;margin:0 auto;display:flex;z-index:6;
+  background:rgba(35,47,62,.6);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--line);border-top-color:rgba(255,255,255,.24);border-radius:22px;padding:4px;
+  box-shadow:0 12px 30px rgba(0,0,0,.45)}
+nav button{flex:1;background:none;border-radius:18px;color:var(--muted);font-size:12.5px;font-weight:650;padding:7px 4px 8px;min-height:54px}
+nav button span{display:block;font-size:20px;line-height:1.1}
+nav button.on{color:var(--orange);background:rgba(255,153,0,.14)}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:rgba(35,47,62,.85);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);color:var(--light);
+  border:1px solid var(--line);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;
+  transition:opacity .2s;max-width:90%;text-align:center;z-index:9;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#toast.on{opacity:1}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;
+  animation:sp .7s linear infinite;vertical-align:-3px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+ol{padding-left:20px;margin:6px 0;font-size:14px} ol li{margin:5px 0} ol li::marker{color:var(--orange);font-weight:700}
+b{font-weight:700}
+/* Máy không hỗ trợ làm mờ nền: dùng kính đặc hơn để chữ vẫn dễ đọc */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .card,header,nav,#toast{background:rgba(35,47,62,.92)}
+}
+</style>
 </head>
-
 <body>
-  <header>
-    <h1>Sổ đơn Shopee</h1>
-    <p>Đơn giá thực tế sau voucher &amp; xu — chia đều theo số món</p>
-  </header>
+<header>
+  <h1>Sổ đơn Shopee</h1>
+  <p>Đơn giá thực tế sau voucher &amp; xu — chia đều theo số món</p>
+</header>
 
-  <main>
-    <!-- THÊM ĐƠN -->
-    <section id="tab-add" class="on">
+<main>
+  <!-- THÊM ĐƠN -->
+  <section id="tab-add" class="on">
+    <div class="card">
+      <h2 id="formTitle">1. Ảnh chụp màn hình đơn hàng</h2>
+      <label class="drop" for="file">
+        <b>＋ Chọn ảnh chụp màn hình</b>
+        <small>Chọn được nhiều ảnh nếu đơn dài. Ảnh chỉ dùng để đọc, không được lưu.</small>
+      </label>
+      <input id="file" type="file" accept="image/*" multiple hidden>
+      <div class="thumbs" id="thumbs"></div>
+      <button class="pri" id="btnRead" style="margin-top:12px" disabled>Đọc ảnh và điền tự động</button>
+      <div id="readMsg"></div>
+      <button class="ghost" id="btnManual" style="width:100%;margin-top:4px">Hoặc nhập tay không cần ảnh</button>
+    </div>
+
+    <div id="formWrap" hidden>
       <div class="card">
-        <h2 id="formTitle">1. Ảnh chụp màn hình đơn hàng</h2>
-        <label class="drop" for="file">
-          <b>＋ Chọn ảnh chụp màn hình</b>
-          <small>Chọn được nhiều ảnh nếu đơn dài. Ảnh chỉ dùng để đọc, không được lưu.</small>
-        </label>
-        <input id="file" type="file" accept="image/*" multiple hidden>
-        <div class="thumbs" id="thumbs"></div>
-        <button class="pri" id="btnRead" style="margin-top:12px" disabled>Đọc ảnh và điền tự động</button>
-        <div id="readMsg"></div>
-        <button class="ghost" id="btnManual" style="width:100%;margin-top:4px">Hoặc nhập tay không cần ảnh</button>
-      </div>
-
-      <div id="formWrap" hidden>
-        <div class="card">
-          <h2>2. Kiểm tra thông tin đơn</h2>
-          <div class="row">
-            <div><label>Mã đơn</label><input type="text" data-o="maDon" placeholder="Để trống sẽ tự tạo"></div>
-            <div><label>Ngày đặt</label><input type="text" data-o="ngay" placeholder="dd/mm/yyyy"></div>
-          </div>
-          <label>Shop</label><input type="text" data-o="shop">
-          <div class="row3">
-            <div><label>Shopee Voucher</label><input type="text" inputmode="numeric" data-o="sv" data-n></div>
-            <div><label>Voucher Shop</label><input type="text" inputmode="numeric" data-o="vs" data-n></div>
-            <div><label>Shopee Xu</label><input type="text" inputmode="numeric" data-o="xu" data-n></div>
-          </div>
+        <h2>2. Kiểm tra thông tin đơn</h2>
+        <div class="row">
+          <div><label>Mã đơn</label><input type="text" data-o="maDon" placeholder="Để trống sẽ tự tạo"></div>
+          <div><label>Ngày đặt</label><input type="text" data-o="ngay" placeholder="dd/mm/yyyy"></div>
         </div>
-
-        <div class="card">
-          <h2>3. Sản phẩm</h2>
-          <div id="items"></div>
-          <button class="sec" id="btnAddItem" style="margin-top:12px">＋ Thêm sản phẩm</button>
-        </div>
-
-        <div class="card">
-          <h2>4. Kết quả</h2>
-          <div class="sum" id="sum"></div>
-          <div id="check"></div>
-          <button class="pri" id="btnSave" style="margin-top:14px">Lưu vào Google Sheets</button>
-          <button class="ghost danger" id="btnCancel" style="width:100%;margin-top:4px">Huỷ, làm lại</button>
+        <label>Shop</label><input type="text" data-o="shop">
+        <div class="row3">
+          <div><label>Shopee Voucher</label><input type="text" inputmode="numeric" data-o="sv" data-n></div>
+          <div><label>Voucher Shop</label><input type="text" inputmode="numeric" data-o="vs" data-n></div>
+          <div><label>Shopee Xu</label><input type="text" inputmode="numeric" data-o="xu" data-n></div>
         </div>
       </div>
-    </section>
 
-    <!-- DANH SÁCH -->
-    <section id="tab-list">
-      <div class="bar">
-        <input type="search" id="q" placeholder="Tìm sản phẩm, shop, mã đơn…">
-      </div>
-      <div class="bar">
-        <button class="sec" id="btnReload">↻ Tải lại</button>
-        <button class="sec" id="btnXlsx">⬇ Tải Excel</button>
-      </div>
-      <div id="list"></div>
-    </section>
-
-    <!-- CÀI ĐẶT -->
-    <section id="tab-set">
       <div class="card">
-        <h2>Kết nối Google Sheets</h2>
-        <label>Địa chỉ Web App (Apps Script, kết thúc bằng /exec)</label>
-        <input type="url" id="setUrl" placeholder="https://script.google.com/macros/s/…/exec">
-        <label>Mã PIN (đúng với APP_PIN đã đặt)</label>
-        <input type="password" id="setPin" autocomplete="off">
-        <button class="pri" id="btnSaveSet" style="margin-top:14px">Lưu và kiểm tra kết nối</button>
-        <div id="setMsg"></div>
+        <h2>3. Sản phẩm</h2>
+        <div id="items"></div>
+        <button class="sec" id="btnAddItem" style="margin-top:12px">＋ Thêm sản phẩm</button>
       </div>
+
       <div class="card">
-        <h2>Kiểm tra chức năng đọc ảnh</h2>
-        <p class="hint">Bấm để Apps Script tự kiểm tra phiên bản, API key Gemini và gọi thử Gemini. Không cần ảnh.</p>
-        <button class="sec" id="btnDiag">Chẩn đoán đọc ảnh</button>
-        <div id="diagMsg"></div>
+        <h2>4. Kết quả</h2>
+        <div class="sum" id="sum"></div>
+        <div id="check"></div>
+        <button class="pri" id="btnSave" style="margin-top:14px">Lưu vào Google Sheets</button>
+        <button class="ghost danger" id="btnCancel" style="width:100%;margin-top:4px">Huỷ, làm lại</button>
       </div>
-      <div class="card">
-        <h2>Cách hoạt động</h2>
-        <ol>
-          <li>Ảnh được thu nhỏ trên máy, gửi tới Apps Script của bạn, chuyển cho Gemini đọc rồi bỏ. Không ảnh nào được
-            lưu.</li>
-          <li>Dữ liệu đơn hàng nằm trong sheet <b>Đơn hàng</b> của Google Sheet của bạn.</li>
-          <li>Địa chỉ và PIN chỉ lưu trên trình duyệt của máy này.</li>
-          <li>Voucher và xu của đơn được chia đều cho từng món (mỗi dòng sản phẩm là một món), giống bảng tính gốc.</li>
-        </ol>
-      </div>
-    </section>
-  </main>
+    </div>
+  </section>
 
-  <nav>
-    <button data-tab="add" class="on"><span>＋</span>Thêm đơn</button>
-    <button data-tab="list"><span>☰</span>Sổ đơn</button>
-    <button data-tab="set"><span>⚙</span>Cài đặt</button>
-  </nav>
-  <div id="toast"></div>
+  <!-- DANH SÁCH -->
+  <section id="tab-list">
+    <div class="bar">
+      <input type="search" id="q" placeholder="Tìm sản phẩm, shop, mã đơn…">
+    </div>
+    <div class="bar">
+      <button class="sec" id="btnReload">↻ Tải lại</button>
+      <button class="sec" id="btnXlsx">⬇ Tải Excel</button>
+    </div>
+    <div id="list"></div>
+  </section>
 
-  <script>
-    'use strict';
-    const $ = s => document.querySelector(s);
-    const $$ = s => Array.from(document.querySelectorAll(s));
-    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10); return isFinite(n) ? n : 0; };
-    const vnd = n => Math.round(n).toLocaleString('vi-VN') + 'đ';
-    const fmtIn = n => n ? Number(n).toLocaleString('vi-VN') : '';
+  <!-- CÀI ĐẶT -->
+  <section id="tab-set">
+    <div class="card">
+      <h2>Kết nối Google Sheets</h2>
+      <label>Địa chỉ Web App (Apps Script, kết thúc bằng /exec)</label>
+      <input type="url" id="setUrl" placeholder="https://script.google.com/macros/s/…/exec">
+      <label>Mã PIN (đúng với APP_PIN đã đặt)</label>
+      <input type="password" id="setPin" autocomplete="off">
+      <button class="pri" id="btnSaveSet" style="margin-top:14px">Lưu và kiểm tra kết nối</button>
+      <div id="setMsg"></div>
+    </div>
+    <div class="card">
+      <h2>Kiểm tra chức năng đọc ảnh</h2>
+      <p class="hint">Bấm để Apps Script tự kiểm tra phiên bản, API key Gemini và gọi thử Gemini. Không cần ảnh.</p>
+      <button class="sec" id="btnDiag">Chẩn đoán đọc ảnh</button>
+      <div id="diagMsg"></div>
+    </div>
+    <div class="card">
+      <h2>Cách hoạt động</h2>
+      <ol>
+        <li>Ảnh được thu nhỏ trên máy, gửi tới Apps Script của bạn, chuyển cho Gemini đọc rồi bỏ. Không ảnh nào được lưu.</li>
+        <li>Dữ liệu đơn hàng nằm trong sheet <b>Đơn hàng</b> của Google Sheet của bạn.</li>
+        <li>Địa chỉ và PIN chỉ lưu trên trình duyệt của máy này.</li>
+        <li>Voucher và xu của đơn được chia đều cho từng món (mỗi dòng sản phẩm là một món), giống bảng tính gốc.</li>
+      </ol>
+    </div>
+  </section>
+</main>
 
-    /* ---------- Chia đều voucher & xu theo số món (dòng) trong đơn ---------- */
-    function compute(order) {
-      const total = order.items.reduce((s, it) => s + it.sl * it.gia, 0);
-      const lines = order.items.map(it => {
-        const line = it.sl * it.gia;
-        const n = order.items.length;
-        const voucher = (order.sv + order.vs) / n;
-        const xu = order.xu / n;
-        const net = line - voucher - xu;
-        return { line, voucher, xu, net, unit: it.sl > 0 ? net / it.sl : 0 };
-      });
-      return { total, lines, paid: total - order.sv - order.vs - order.xu };
-    }
+<nav>
+  <button data-tab="add" class="on"><span>＋</span>Thêm đơn</button>
+  <button data-tab="list"><span>☰</span>Sổ đơn</button>
+  <button data-tab="set"><span>⚙</span>Cài đặt</button>
+</nav>
+<div id="toast"></div>
 
-    /* ---------- Cài đặt & gọi máy chủ ---------- */
-    const store = {
-      get(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } },
-      set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10); return isFinite(n) ? n : 0; };
+const vnd = n => Math.round(n).toLocaleString('vi-VN') + 'đ';
+const fmtIn = n => n ? Number(n).toLocaleString('vi-VN') : '';
+
+/* ---------- Chia đều voucher & xu theo số món (dòng) trong đơn ---------- */
+function compute(order) {
+  const total = order.items.reduce((s, it) => s + it.sl * it.gia, 0);
+  const lines = order.items.map(it => {
+    const line = it.sl * it.gia;
+    const n = order.items.length;
+    const voucher = (order.sv + order.vs) / n;
+    const xu = order.xu / n;
+    const net = line - voucher - xu;
+    return { line, voucher, xu, net, unit: it.sl > 0 ? net / it.sl : 0 };
+  });
+  return { total, lines, paid: total - order.sv - order.vs - order.xu };
+}
+
+/* ---------- Cài đặt & gọi máy chủ ---------- */
+const store = {
+  get(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+let cfg = { url: store.get('sds_url'), pin: store.get('sds_pin') };
+
+async function api(action, data) {
+  if (!cfg.url) { go('set'); throw new Error('Chưa kết nối Google Sheets. Hãy điền mục Cài đặt.'); }
+  const body = JSON.stringify(Object.assign({ action, pin: cfg.pin }, data || {}));
+  const send = () => fetch(cfg.url, { method: 'POST', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body });
+  let res;
+  try { res = await send(); }
+  catch (e) {
+    // Rớt mạng thoáng qua: tự thử lại 1 lần. Không thử lại lệnh lưu/xoá để tránh ghi trùng.
+    if (!['ping', 'list', 'diag', 'extract'].includes(action)) throw new Error('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.');
+    await new Promise(r => setTimeout(r, 1500));
+    try { res = await send(); }
+    catch (e2) { throw new Error('Không kết nối được máy chủ (đã thử 2 lần). Kiểm tra mạng, hoặc địa chỉ Web App trong Cài đặt có đúng link /exec không.'); }
+  }
+  let j;
+  try { j = await res.json(); } catch (e) { throw new Error('Máy chủ trả lời không hợp lệ. Kiểm tra lại địa chỉ Web App và quyền truy cập "Anyone".'); }
+  if (!j.ok) { const er = new Error(j.error || 'Lỗi không rõ'); er.code = j.code; throw er; }
+  return j;
+}
+
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3200); }
+function busy(btn, on, label) {
+  if (on) { btn.dataset.l = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="spin"></i>' + label; }
+  else { btn.disabled = false; btn.innerHTML = btn.dataset.l; }
+}
+
+/* ---------- Điều hướng ---------- */
+function go(tab) {
+  $$('section').forEach(s => s.classList.toggle('on', s.id === 'tab-' + tab));
+  $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  if (tab === 'list' && !rows) loadList();
+  window.scrollTo(0, 0);
+}
+$$('nav button').forEach(b => b.onclick = () => go(b.dataset.tab));
+
+/* ---------- Ảnh ---------- */
+let images = [];   // {mime, data(base64)} — chỉ nằm trong bộ nhớ, bỏ sau khi đọc
+function shrink(file) {
+  return new Promise((ok, fail) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 1200 / img.width, 7000 / img.height);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      const d = c.toDataURL('image/jpeg', 0.85);
+      ok({ mime: 'image/jpeg', data: d.split(',')[1], preview: d });
     };
-    let cfg = { url: store.get('sds_url'), pin: store.get('sds_pin') };
+    img.onerror = () => { URL.revokeObjectURL(url); fail(new Error('Không mở được ảnh ' + file.name)); };
+    img.src = url;
+  });
+}
+$('#file').onchange = async e => {
+  try {
+    images = await Promise.all(Array.from(e.target.files).slice(0, 6).map(shrink));
+    $('#thumbs').innerHTML = images.map(i => '<img alt="" src="' + i.preview + '">').join('');
+    $('#btnRead').disabled = !images.length;
+    $('#readMsg').innerHTML = '';
+  } catch (er) { showReadErr(er.message); }
+  e.target.value = '';
+};
+function clearImages() { images = []; $('#thumbs').innerHTML = ''; $('#btnRead').disabled = true; $('#readMsg').innerHTML = ''; }
+function showReadErr(msg) { $('#readMsg').innerHTML = '<div class="note bad">' + esc(msg) + '</div>'; toast(msg); }
 
-    async function api(action, data) {
-      if (!cfg.url) { go('set'); throw new Error('Chưa kết nối Google Sheets. Hãy điền mục Cài đặt.'); }
-      const body = JSON.stringify(Object.assign({ action, pin: cfg.pin }, data || {}));
-      const send = () => fetch(cfg.url, {
-        method: 'POST', redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body
-      });
-      let res;
-      try { res = await send(); }
-      catch (e) {
-        // Rớt mạng thoáng qua: tự thử lại 1 lần. Không thử lại lệnh lưu/xoá để tránh ghi trùng.
-        if (!['ping', 'list', 'diag', 'extract'].includes(action)) throw new Error('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.');
-        await new Promise(r => setTimeout(r, 1500));
-        try { res = await send(); }
-        catch (e2) { throw new Error('Không kết nối được máy chủ (đã thử 2 lần). Kiểm tra mạng, hoặc địa chỉ Web App trong Cài đặt có đúng link /exec không.'); }
-      }
-      let j;
-      try { j = await res.json(); } catch (e) { throw new Error('Máy chủ trả lời không hợp lệ. Kiểm tra lại địa chỉ Web App và quyền truy cập "Anyone".'); }
-      if (!j.ok) { const er = new Error(j.error || 'Lỗi không rõ'); er.code = j.code; throw er; }
-      return j;
-    }
+$('#btnRead').onclick = async () => {
+  const b = $('#btnRead');
+  busy(b, true, 'Đang đọc ảnh…');
+  $('#readMsg').innerHTML = '';
+  try {
+    const j = await api('extract', { images: images.map(i => ({ mime: i.mime, data: i.data })) });
+    if (!j.order) throw new Error('Máy chủ không trả về dữ liệu đơn. Có thể Apps Script đang chạy bản cũ: hãy Deploy > Manage deployments > Edit > New version.');
+    busy(b, false);
+    openForm(j.order, null);
+    clearImages();
+    toast('Đã điền xong. Hãy kiểm tra lại các con số.');
+    return;
+  } catch (er) { showReadErr(er.message === 'Lệnh không hợp lệ.' ? OLD_SCRIPT : er.message + ' (Vào Cài đặt > Chẩn đoán đọc ảnh để xem chi tiết.)'); }
+  busy(b, false);
+};
+$('#btnManual').onclick = () => openForm({ items: [{}] }, null);
 
-    let toastT;
-    function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3200); }
-    function busy(btn, on, label) {
-      if (on) { btn.dataset.l = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="spin"></i>' + label; }
-      else { btn.disabled = false; btn.innerHTML = btn.dataset.l; }
-    }
+/* ---------- Form đơn hàng ---------- */
+let draft = null, editingId = null;
+function openForm(o, originalId) {
+  editingId = originalId;
+  draft = {
+    maDon: o.maDon || '', ngay: o.ngay || '', shop: o.shop || '',
+    sv: num(o.sv), vs: num(o.vs), xu: num(o.xu),
+    ship: num(o.ship), thanhTien: num(o.thanhTien),
+    items: (o.items && o.items.length ? o.items : [{}]).map(it => ({
+      ten: it.ten || '', phanLoai: it.phanLoai || '', sl: num(it.sl) || 1, gia: num(it.gia) }))
+  };
+  $$('[data-o]').forEach(i => { const v = draft[i.dataset.o]; i.value = ('n' in i.dataset) ? fmtIn(v) : v; });
+  renderItems(); recalc();
+  $('#formWrap').hidden = false;
+  $('#btnSave').textContent = editingId ? 'Lưu thay đổi' : 'Lưu vào Google Sheets';
+  go('add');
+}
+function closeForm() { draft = null; editingId = null; $('#formWrap').hidden = true; clearImages(); }
+$('#btnCancel').onclick = closeForm;
 
-    /* ---------- Điều hướng ---------- */
-    function go(tab) {
-      $$('section').forEach(s => s.classList.toggle('on', s.id === 'tab-' + tab));
-      $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-      if (tab === 'list' && !rows) loadList();
-      window.scrollTo(0, 0);
-    }
-    $$('nav button').forEach(b => b.onclick = () => go(b.dataset.tab));
+$$('[data-o]').forEach(i => i.oninput = () => {
+  if (!draft) return;
+  if ('n' in i.dataset) { draft[i.dataset.o] = num(i.value); i.value = fmtIn(draft[i.dataset.o]); }
+  else draft[i.dataset.o] = i.value;
+  recalc();
+});
 
-    /* ---------- Ảnh ---------- */
-    let images = [];   // {mime, data(base64)} — chỉ nằm trong bộ nhớ, bỏ sau khi đọc
-    function shrink(file) {
-      return new Promise((ok, fail) => {
-        const url = URL.createObjectURL(file), img = new Image();
-        img.onload = () => {
-          const k = Math.min(1, 1200 / img.width, 7000 / img.height);
-          const c = document.createElement('canvas');
-          c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-          URL.revokeObjectURL(url);
-          const d = c.toDataURL('image/jpeg', 0.85);
-          ok({ mime: 'image/jpeg', data: d.split(',')[1], preview: d });
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); fail(new Error('Không mở được ảnh ' + file.name)); };
-        img.src = url;
-      });
-    }
-    $('#file').onchange = async e => {
-      try {
-        images = await Promise.all(Array.from(e.target.files).slice(0, 6).map(shrink));
-        $('#thumbs').innerHTML = images.map(i => '<img alt="" src="' + i.preview + '">').join('');
-        $('#btnRead').disabled = !images.length;
-        $('#readMsg').innerHTML = '';
-      } catch (er) { showReadErr(er.message); }
-      e.target.value = '';
-    };
-    function clearImages() { images = []; $('#thumbs').innerHTML = ''; $('#btnRead').disabled = true; $('#readMsg').innerHTML = ''; }
-    function showReadErr(msg) { $('#readMsg').innerHTML = '<div class="note bad">' + esc(msg) + '</div>'; toast(msg); }
-
-    $('#btnRead').onclick = async () => {
-      const b = $('#btnRead');
-      busy(b, true, 'Đang đọc ảnh…');
-      $('#readMsg').innerHTML = '';
-      try {
-        const j = await api('extract', { images: images.map(i => ({ mime: i.mime, data: i.data })) });
-        if (!j.order) throw new Error('Máy chủ không trả về dữ liệu đơn. Có thể Apps Script đang chạy bản cũ: hãy Deploy > Manage deployments > Edit > New version.');
-        busy(b, false);
-        openForm(j.order, null);
-        clearImages();
-        toast('Đã điền xong. Hãy kiểm tra lại các con số.');
-        return;
-      } catch (er) { showReadErr(er.message === 'Lệnh không hợp lệ.' ? OLD_SCRIPT : er.message + ' (Vào Cài đặt > Chẩn đoán đọc ảnh để xem chi tiết.)'); }
-      busy(b, false);
-    };
-    $('#btnManual').onclick = () => openForm({ items: [{}] }, null);
-
-    /* ---------- Form đơn hàng ---------- */
-    let draft = null, editingId = null;
-    function openForm(o, originalId) {
-      editingId = originalId;
-      draft = {
-        maDon: o.maDon || '', ngay: o.ngay || '', shop: o.shop || '',
-        sv: num(o.sv), vs: num(o.vs), xu: num(o.xu),
-        ship: num(o.ship), thanhTien: num(o.thanhTien),
-        items: (o.items && o.items.length ? o.items : [{}]).map(it => ({
-          ten: it.ten || '', phanLoai: it.phanLoai || '', sl: num(it.sl) || 1, gia: num(it.gia)
-        }))
-      };
-      $$('[data-o]').forEach(i => { const v = draft[i.dataset.o]; i.value = ('n' in i.dataset) ? fmtIn(v) : v; });
-      renderItems(); recalc();
-      $('#formWrap').hidden = false;
-      $('#btnSave').textContent = editingId ? 'Lưu thay đổi' : 'Lưu vào Google Sheets';
-      go('add');
-    }
-    function closeForm() { draft = null; editingId = null; $('#formWrap').hidden = true; clearImages(); }
-    $('#btnCancel').onclick = closeForm;
-
-    $$('[data-o]').forEach(i => i.oninput = () => {
-      if (!draft) return;
-      if ('n' in i.dataset) { draft[i.dataset.o] = num(i.value); i.value = fmtIn(draft[i.dataset.o]); }
-      else draft[i.dataset.o] = i.value;
-      recalc();
-    });
-
-    function renderItems() {
-      $('#items').innerHTML = draft.items.map((it, k) => `
+function renderItems() {
+  $('#items').innerHTML = draft.items.map((it, k) => `
     <div class="item" data-k="${k}">
       <div class="top"><span>Món ${k + 1}</span>
         ${draft.items.length > 1 ? '<button class="ghost danger" data-del>Xoá</button>' : ''}</div>
@@ -815,90 +366,88 @@
       </div>
       <div class="calc"><span>Đơn giá thực tế sau giảm</span><b data-unit>—</b></div>
     </div>`).join('');
-    }
-    $('#items').addEventListener('input', e => {
-      const f = e.target.dataset.f; if (!f) return;
-      const it = draft.items[+e.target.closest('.item').dataset.k];
-      if ('n' in e.target.dataset) { it[f] = num(e.target.value); if (f === 'gia') e.target.value = fmtIn(it[f]); }
-      else it[f] = e.target.value;
-      recalc();
-    });
-    $('#items').addEventListener('click', e => {
-      if (!('del' in e.target.dataset)) return;
-      draft.items.splice(+e.target.closest('.item').dataset.k, 1); renderItems(); recalc();
-    });
-    $('#btnAddItem').onclick = () => { draft.items.push({ ten: '', phanLoai: '', sl: 1, gia: 0 }); renderItems(); recalc(); };
+}
+$('#items').addEventListener('input', e => {
+  const f = e.target.dataset.f; if (!f) return;
+  const it = draft.items[+e.target.closest('.item').dataset.k];
+  if ('n' in e.target.dataset) { it[f] = num(e.target.value); if (f === 'gia') e.target.value = fmtIn(it[f]); }
+  else it[f] = e.target.value;
+  recalc();
+});
+$('#items').addEventListener('click', e => {
+  if (!('del' in e.target.dataset)) return;
+  draft.items.splice(+e.target.closest('.item').dataset.k, 1); renderItems(); recalc();
+});
+$('#btnAddItem').onclick = () => { draft.items.push({ ten: '', phanLoai: '', sl: 1, gia: 0 }); renderItems(); recalc(); };
 
-    function recalc() {
-      const c = compute(draft);
-      $$('#items [data-unit]').forEach((el, k) => {
-        const l = c.lines[k];
-        el.textContent = l && l.line > 0 ? vnd(l.unit) + (draft.items[k].sl > 1 ? ' / món' : '') : '—';
-      });
-      $('#sum').innerHTML =
-        `<div><span>Tổng tiền hàng</span><span>${vnd(c.total)}</span></div>
+function recalc() {
+  const c = compute(draft);
+  $$('#items [data-unit]').forEach((el, k) => {
+    const l = c.lines[k];
+    el.textContent = l && l.line > 0 ? vnd(l.unit) + (draft.items[k].sl > 1 ? ' / món' : '') : '—';
+  });
+  $('#sum').innerHTML =
+    `<div><span>Tổng tiền hàng</span><span>${vnd(c.total)}</span></div>
      <div><span>Shopee Voucher</span><span>−${vnd(draft.sv)}</span></div>
      <div><span>Voucher Shop</span><span>−${vnd(draft.vs)}</span></div>
      <div><span>Shopee Xu</span><span>−${vnd(draft.xu)}</span></div>
      <div class="big"><span>Thực trả cho hàng</span><span>${vnd(c.paid)}</span></div>`;
-      let h = '';
-      if (c.paid >= 0 && c.lines.some(l => l.line > 0 && l.net < 0)) h += '<div class="note warn">Có món rẻ hơn phần voucher chia đều nên đơn giá ra số âm. Tổng cả đơn vẫn đúng.</div>';
-      if (c.paid < 0) h += '<div class="note bad">Tổng giảm lớn hơn tiền hàng. Kiểm tra lại voucher và giá.</div>';
-      if (draft.thanhTien) {
-        const expect = c.paid + draft.ship, diff = draft.thanhTien - expect;
-        h += Math.abs(diff) <= 1
-          ? `<div class="note ok">Khớp với "Thành tiền" trong ảnh: ${vnd(draft.thanhTien)}${draft.ship ? ' (gồm ' + vnd(draft.ship) + ' phí vận chuyển)' : ''}.</div>`
-          : `<div class="note warn">"Thành tiền" trong ảnh là ${vnd(draft.thanhTien)}, còn số tính ra${draft.ship ? ' (cộng ' + vnd(draft.ship) + ' phí vận chuyển)' : ''} là ${vnd(expect)}, lệch ${vnd(Math.abs(diff))}. Hãy soát lại các ô.</div>`;
-      }
-      $('#check').innerHTML = h;
-    }
+  let h = '';
+  if (c.paid >= 0 && c.lines.some(l => l.line > 0 && l.net < 0)) h += '<div class="note warn">Có món rẻ hơn phần voucher chia đều nên đơn giá ra số âm. Tổng cả đơn vẫn đúng.</div>';
+  if (c.paid < 0) h += '<div class="note bad">Tổng giảm lớn hơn tiền hàng. Kiểm tra lại voucher và giá.</div>';
+  if (draft.thanhTien) {
+    const expect = c.paid + draft.ship, diff = draft.thanhTien - expect;
+    h += Math.abs(diff) <= 1
+      ? `<div class="note ok">Khớp với "Thành tiền" trong ảnh: ${vnd(draft.thanhTien)}${draft.ship ? ' (gồm ' + vnd(draft.ship) + ' phí vận chuyển)' : ''}.</div>`
+      : `<div class="note warn">"Thành tiền" trong ảnh là ${vnd(draft.thanhTien)}, còn số tính ra${draft.ship ? ' (cộng ' + vnd(draft.ship) + ' phí vận chuyển)' : ''} là ${vnd(expect)}, lệch ${vnd(Math.abs(diff))}. Hãy soát lại các ô.</div>`;
+  }
+  $('#check').innerHTML = h;
+}
 
-    $('#btnSave').onclick = async () => {
-      const items = draft.items.filter(it => it.ten.trim() || it.gia);
-      if (!items.length) return toast('Chưa có sản phẩm nào.');
-      if (items.some(it => !it.gia || !it.sl)) return toast('Mỗi món cần có số lượng và giá mua.');
-      const order = {
-        maDon: draft.maDon.trim(), ngay: draft.ngay.trim(), shop: draft.shop.trim(),
-        sv: draft.sv, vs: draft.vs, xu: draft.xu, items
-      };
-      const b = $('#btnSave'); busy(b, true, 'Đang lưu…');
-      try {
-        let j;
-        try { j = await api('save', { order, originalId: editingId || '' }); }
-        catch (er) {
-          if (er.code !== 'DUP' || !confirm(er.message + '\nGhi đè đơn cũ?')) throw er;
-          j = await api('save', { order, originalId: editingId || '', replace: true });
-        }
-        busy(b, false); closeForm(); rows = null;
-        toast('Đã lưu đơn ' + j.id); go('list');
-        return;
-      } catch (er) { toast(er.message); }
-      busy(b, false);
-    };
+$('#btnSave').onclick = async () => {
+  const items = draft.items.filter(it => it.ten.trim() || it.gia);
+  if (!items.length) return toast('Chưa có sản phẩm nào.');
+  if (items.some(it => !it.gia || !it.sl)) return toast('Mỗi món cần có số lượng và giá mua.');
+  const order = { maDon: draft.maDon.trim(), ngay: draft.ngay.trim(), shop: draft.shop.trim(),
+    sv: draft.sv, vs: draft.vs, xu: draft.xu, items };
+  const b = $('#btnSave'); busy(b, true, 'Đang lưu…');
+  try {
+    let j;
+    try { j = await api('save', { order, originalId: editingId || '' }); }
+    catch (er) {
+      if (er.code !== 'DUP' || !confirm(er.message + '\nGhi đè đơn cũ?')) throw er;
+      j = await api('save', { order, originalId: editingId || '', replace: true });
+    }
+    busy(b, false); closeForm(); rows = null;
+    toast('Đã lưu đơn ' + j.id); go('list');
+    return;
+  } catch (er) { toast(er.message); }
+  busy(b, false);
+};
 
-    /* ---------- Sổ đơn ---------- */
-    let rows = null;
-    function group(rs) {
-      const map = new Map();
-      rs.forEach(r => {
-        if (!map.has(r.maDon)) map.set(r.maDon, { maDon: r.maDon, ngay: r.ngay, shop: r.shop, sv: r.sv, vs: r.vs, xu: r.xu, items: [] });
-        map.get(r.maDon).items.push({ ten: r.ten, phanLoai: r.phanLoai, sl: r.sl, gia: r.gia });
-      });
-      return Array.from(map.values()).reverse();   // đơn mới nhất lên đầu
-    }
-    async function loadList() {
-      $('#list').innerHTML = '<div class="empty">Đang tải…</div>';
-      try { rows = (await api('list')).rows; renderList(); }
-      catch (er) { $('#list').innerHTML = '<div class="empty">' + esc(er.message) + '</div>'; }
-    }
-    function renderList() {
-      const q = $('#q').value.trim().toLowerCase();
-      let orders = group(rows || []);
-      if (q) orders = orders.filter(o => (o.maDon + ' ' + o.shop + ' ' + o.items.map(i => i.ten + ' ' + i.phanLoai).join(' ')).toLowerCase().includes(q));
-      if (!orders.length) { $('#list').innerHTML = '<div class="empty">' + (q ? 'Không tìm thấy.' : 'Chưa có đơn nào. Hãy thêm đơn đầu tiên.') + '</div>'; return; }
-      $('#list').innerHTML = orders.map(o => {
-        const c = compute(o);
-        return `<div class="card order">
+/* ---------- Sổ đơn ---------- */
+let rows = null;
+function group(rs) {
+  const map = new Map();
+  rs.forEach(r => {
+    if (!map.has(r.maDon)) map.set(r.maDon, { maDon: r.maDon, ngay: r.ngay, shop: r.shop, sv: r.sv, vs: r.vs, xu: r.xu, items: [] });
+    map.get(r.maDon).items.push({ ten: r.ten, phanLoai: r.phanLoai, sl: r.sl, gia: r.gia });
+  });
+  return Array.from(map.values()).reverse();   // đơn mới nhất lên đầu
+}
+async function loadList() {
+  $('#list').innerHTML = '<div class="empty">Đang tải…</div>';
+  try { rows = (await api('list')).rows; renderList(); }
+  catch (er) { $('#list').innerHTML = '<div class="empty">' + esc(er.message) + '</div>'; }
+}
+function renderList() {
+  const q = $('#q').value.trim().toLowerCase();
+  let orders = group(rows || []);
+  if (q) orders = orders.filter(o => (o.maDon + ' ' + o.shop + ' ' + o.items.map(i => i.ten + ' ' + i.phanLoai).join(' ')).toLowerCase().includes(q));
+  if (!orders.length) { $('#list').innerHTML = '<div class="empty">' + (q ? 'Không tìm thấy.' : 'Chưa có đơn nào. Hãy thêm đơn đầu tiên.') + '</div>'; return; }
+  $('#list').innerHTML = orders.map(o => {
+    const c = compute(o);
+    return `<div class="card order">
       <div class="head"><div><b>${esc(o.shop || '(chưa có tên shop)')}</b><small>${esc(o.maDon)}${o.ngay ? ' · ' + esc(o.ngay) : ''}</small></div>
         <div class="paid">${vnd(c.paid)}</div></div>
       ${o.items.map((it, k) => `<div class="line">
@@ -906,91 +455,88 @@
         <div class="u"><b>${vnd(c.lines[k].unit)}</b><s>${vnd(it.gia)}</s></div></div>`).join('')}
       <div class="acts"><button class="ghost" data-edit="${esc(o.maDon)}">Sửa</button>
         <button class="ghost danger" data-rm="${esc(o.maDon)}">Xoá</button></div></div>`;
-      }).join('');
-    }
-    $('#q').oninput = renderList;
-    $('#btnReload').onclick = loadList;
-    $('#list').addEventListener('click', async e => {
-      const ed = e.target.dataset.edit, rm = e.target.dataset.rm;
-      if (ed) { const o = group(rows).find(x => x.maDon === ed); if (o) openForm(o, o.maDon); }
-      if (rm && confirm('Xoá đơn ' + rm + ' khỏi Google Sheets?')) {
-        try { await api('delete', { id: rm }); rows = rows.filter(r => r.maDon !== rm); renderList(); toast('Đã xoá.'); }
-        catch (er) { toast(er.message); }
-      }
-    });
+  }).join('');
+}
+$('#q').oninput = renderList;
+$('#btnReload').onclick = loadList;
+$('#list').addEventListener('click', async e => {
+  const ed = e.target.dataset.edit, rm = e.target.dataset.rm;
+  if (ed) { const o = group(rows).find(x => x.maDon === ed); if (o) openForm(o, o.maDon); }
+  if (rm && confirm('Xoá đơn ' + rm + ' khỏi Google Sheets?')) {
+    try { await api('delete', { id: rm }); rows = rows.filter(r => r.maDon !== rm); renderList(); toast('Đã xoá.'); }
+    catch (er) { toast(er.message); }
+  }
+});
 
-    /* ---------- Tải Excel (đúng bố cục bảng gốc, có công thức) ---------- */
-    function buildSheetAoa(rs) {
-      // Trả về mảng ô theo bố cục: tiêu đề dòng 1, hướng dẫn dòng 2, đầu cột dòng 4, dữ liệu từ dòng 5.
-      const head = ['Mã đơn', 'Ngày đặt', 'Shop', 'Tên sản phẩm', 'Phân loại', 'SL', 'Giá mua (đ/món)', 'Shopee Voucher (đ/đơn)',
-        'Voucher Shop (đ/đơn)', 'Shopee Xu (đ/đơn)', 'Số món/đơn [Auto]', 'Voucher chia đều/món [Auto]', 'Xu chia đều/món [Auto]',
-        'Thành tiền thực trả [Auto]', 'Đơn giá thực tế sau giảm [Auto]'];
-      const first = 5, last = Math.max(first, first + rs.length - 1);
-      const byId = {}; group(rs).forEach(o => byId[o.maDon] = compute(o));
-      const seen = {};
-      const data = rs.map((r, i) => {
-        const n = first + i, k = seen[r.maDon] = (seen[r.maDon] == null ? 0 : seen[r.maDon] + 1);
-        const c = byId[r.maDon], l = c.lines[k];
-        return [r.maDon, r.ngay, r.shop, r.ten, r.phanLoai, r.sl, r.gia, r.sv, r.vs, r.xu,
-        { t: 'n', v: c.lines.length, f: `COUNTIF($A$${first}:$A$${last},A${n})` },
-        { t: 'n', v: l.voucher, f: `(H${n}+I${n})/K${n}` },
-        { t: 'n', v: l.xu, f: `J${n}/K${n}` },
-        { t: 'n', v: l.net, f: `F${n}*G${n}-L${n}-M${n}` },
-        { t: 'n', v: l.unit, f: `IF(F${n}=0,"",N${n}/F${n})` }];
-      });
-      return [['BẢNG TÍNH ĐƠN GIÁ THỰC TẾ & PHÂN BỔ VOUCHER SHOPEE'],
-      ['Voucher và Xu của mỗi đơn được chia đều theo số món trong đơn. Các cột [Auto] là công thức.'],
-      [], head].concat(data);
-    }
-    function loadScript(src) {
-      return new Promise((ok, fail) => {
-        const s = document.createElement('script'); s.src = src; s.onload = ok;
-        s.onerror = () => fail(new Error('Không tải được thư viện Excel. Kiểm tra mạng.')); document.head.appendChild(s);
-      });
-    }
-    $('#btnXlsx').onclick = async () => {
-      const b = $('#btnXlsx'); busy(b, true, 'Đang tạo…');
-      try {
-        if (!rows) rows = (await api('list')).rows;
-        if (!rows.length) throw new Error('Chưa có dữ liệu để tải.');
-        if (!window.XLSX) await loadScript('https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js');
-        const ws = XLSX.utils.aoa_to_sheet(buildSheetAoa(rows));
-        ws['!cols'] = [16, 12, 24, 38, 28, 6, 14, 16, 16, 14, 16, 16, 14, 18, 20].map(w => ({ wch: w }));
-        Object.keys(ws).forEach(a => { if (a[0] !== '!' && ws[a].t === 'n' && /^[G-O]/.test(a)) ws[a].z = '#,##0'; });
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Chi tiết đơn hàng');
-        const d = new Date(), p = n => String(n).padStart(2, '0');
-        XLSX.writeFile(wb, `shopee_don_gia_thuc_te_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}.xlsx`);
-      } catch (er) { toast(er.message); }
-      busy(b, false);
-    };
+/* ---------- Tải Excel (đúng bố cục bảng gốc, có công thức) ---------- */
+function buildSheetAoa(rs) {
+  // Trả về mảng ô theo bố cục: tiêu đề dòng 1, hướng dẫn dòng 2, đầu cột dòng 4, dữ liệu từ dòng 5.
+  const head = ['Mã đơn','Ngày đặt','Shop','Tên sản phẩm','Phân loại','SL','Giá mua (đ/món)','Shopee Voucher (đ/đơn)',
+    'Voucher Shop (đ/đơn)','Shopee Xu (đ/đơn)','Số món/đơn [Auto]','Voucher chia đều/món [Auto]','Xu chia đều/món [Auto]',
+    'Thành tiền thực trả [Auto]','Đơn giá thực tế sau giảm [Auto]'];
+  const first = 5, last = Math.max(first, first + rs.length - 1);
+  const byId = {}; group(rs).forEach(o => byId[o.maDon] = compute(o));
+  const seen = {};
+  const data = rs.map((r, i) => {
+    const n = first + i, k = seen[r.maDon] = (seen[r.maDon] == null ? 0 : seen[r.maDon] + 1);
+    const c = byId[r.maDon], l = c.lines[k];
+    return [r.maDon, r.ngay, r.shop, r.ten, r.phanLoai, r.sl, r.gia, r.sv, r.vs, r.xu,
+      { t: 'n', v: c.lines.length, f: `COUNTIF($A$${first}:$A$${last},A${n})` },
+      { t: 'n', v: l.voucher, f: `(H${n}+I${n})/K${n}` },
+      { t: 'n', v: l.xu, f: `J${n}/K${n}` },
+      { t: 'n', v: l.net, f: `F${n}*G${n}-L${n}-M${n}` },
+      { t: 'n', v: l.unit, f: `IF(F${n}=0,"",N${n}/F${n})` }];
+  });
+  return [['BẢNG TÍNH ĐƠN GIÁ THỰC TẾ & PHÂN BỔ VOUCHER SHOPEE'],
+    ['Voucher và Xu của mỗi đơn được chia đều theo số món trong đơn. Các cột [Auto] là công thức.'],
+    [], head].concat(data);
+}
+function loadScript(src) {
+  return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok;
+    s.onerror = () => fail(new Error('Không tải được thư viện Excel. Kiểm tra mạng.')); document.head.appendChild(s); });
+}
+$('#btnXlsx').onclick = async () => {
+  const b = $('#btnXlsx'); busy(b, true, 'Đang tạo…');
+  try {
+    if (!rows) rows = (await api('list')).rows;
+    if (!rows.length) throw new Error('Chưa có dữ liệu để tải.');
+    if (!window.XLSX) await loadScript('https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js');
+    const ws = XLSX.utils.aoa_to_sheet(buildSheetAoa(rows));
+    ws['!cols'] = [16, 12, 24, 38, 28, 6, 14, 16, 16, 14, 16, 16, 14, 18, 20].map(w => ({ wch: w }));
+    Object.keys(ws).forEach(a => { if (a[0] !== '!' && ws[a].t === 'n' && /^[G-O]/.test(a)) ws[a].z = '#,##0'; });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Chi tiết đơn hàng');
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    XLSX.writeFile(wb, `shopee_don_gia_thuc_te_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}.xlsx`);
+  } catch (er) { toast(er.message); }
+  busy(b, false);
+};
 
-    /* ---------- Cài đặt ---------- */
-    $('#setUrl').value = cfg.url; $('#setPin').value = cfg.pin;
-    $('#btnSaveSet').onclick = async () => {
-      cfg = { url: $('#setUrl').value.trim(), pin: $('#setPin').value.trim() };
-      store.set('sds_url', cfg.url); store.set('sds_pin', cfg.pin);
-      const b = $('#btnSaveSet'); busy(b, true, 'Đang kiểm tra…');
-      try { await api('ping'); $('#setMsg').innerHTML = '<div class="note ok">Kết nối thành công.</div>'; rows = null; }
-      catch (er) { $('#setMsg').innerHTML = '<div class="note bad">' + esc(er.message) + '</div>'; }
-      busy(b, false);
-    };
-    const OLD_SCRIPT = 'Apps Script trên Google đang là BẢN CŨ (chưa có chức năng này). Chép lại toàn bộ mã mới vào trình soạn Apps Script, bấm Lưu, rồi Deploy > Manage deployments > biểu tượng bút chì > Version: New version > Deploy. Địa chỉ /exec giữ nguyên.';
-    $('#btnDiag').onclick = async () => {
-      const b = $('#btnDiag'), box = $('#diagMsg');
-      busy(b, true, 'Đang kiểm tra…'); box.innerHTML = '';
-      try {
-        const j = await api('diag');
-        box.innerHTML = j.checks.map(c => `<div class="note ${c.ok ? 'ok' : 'bad'}"><b>${c.ok ? '✓' : '✗'} ${esc(c.name)}</b>${esc(c.detail)}</div>`).join('');
-      } catch (er) {
-        const msg = er.message === 'Lệnh không hợp lệ.' ? OLD_SCRIPT
-          : er.code === 'PIN' ? 'Sai mã PIN: PIN ở ô trên phải giống hệt APP_PIN trong Script Properties.' : er.message;
-        box.innerHTML = '<div class="note bad"><b>✗ Không kiểm tra được</b>' + esc(msg) + '</div>';
-      }
-      busy(b, false);
-    };
-    if (!cfg.url) go('set');
-  </script>
+/* ---------- Cài đặt ---------- */
+$('#setUrl').value = cfg.url; $('#setPin').value = cfg.pin;
+$('#btnSaveSet').onclick = async () => {
+  cfg = { url: $('#setUrl').value.trim(), pin: $('#setPin').value.trim() };
+  store.set('sds_url', cfg.url); store.set('sds_pin', cfg.pin);
+  const b = $('#btnSaveSet'); busy(b, true, 'Đang kiểm tra…');
+  try { await api('ping'); $('#setMsg').innerHTML = '<div class="note ok">Kết nối thành công.</div>'; rows = null; }
+  catch (er) { $('#setMsg').innerHTML = '<div class="note bad">' + esc(er.message) + '</div>'; }
+  busy(b, false);
+};
+const OLD_SCRIPT = 'Apps Script trên Google đang là BẢN CŨ (chưa có chức năng này). Chép lại toàn bộ mã mới vào trình soạn Apps Script, bấm Lưu, rồi Deploy > Manage deployments > biểu tượng bút chì > Version: New version > Deploy. Địa chỉ /exec giữ nguyên.';
+$('#btnDiag').onclick = async () => {
+  const b = $('#btnDiag'), box = $('#diagMsg');
+  busy(b, true, 'Đang kiểm tra…'); box.innerHTML = '';
+  try {
+    const j = await api('diag');
+    box.innerHTML = j.checks.map(c => `<div class="note ${c.ok ? 'ok' : 'bad'}"><b>${c.ok ? '✓' : '✗'} ${esc(c.name)}</b>${esc(c.detail)}</div>`).join('');
+  } catch (er) {
+    const msg = er.message === 'Lệnh không hợp lệ.' ? OLD_SCRIPT
+      : er.code === 'PIN' ? 'Sai mã PIN: PIN ở ô trên phải giống hệt APP_PIN trong Script Properties.' : er.message;
+    box.innerHTML = '<div class="note bad"><b>✗ Không kiểm tra được</b>' + esc(msg) + '</div>';
+  }
+  busy(b, false);
+};
+if (!cfg.url) go('set');
+</script>
 </body>
-
 </html>
