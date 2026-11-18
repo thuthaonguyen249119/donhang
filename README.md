@@ -10,8 +10,9 @@
  *   GEMINI_MODEL    tên model, mặc định "gemini-flash-latest"
  */
 
-const SCRIPT_VERSION = '2026-11-18b';   // app dùng số này để biết Apps Script có phải bản mới nhất
+const SCRIPT_VERSION = '2026-11-18c';   // app dùng số này để biết Apps Script có phải bản mới nhất
 const SHEET_NAME = 'Đơn hàng';
+const SHOP_SHEET = 'Cửa hàng';          // tên shop → link cửa hàng (dùng chung cho mọi đơn của shop)
 const HEADERS = [
   'Mã đơn', 'Ngày đặt', 'Shop', 'Tên sản phẩm', 'Phân loại', 'SL', 'Giá mua (đ/món)',
   'Shopee Voucher (đ/đơn)', 'Voucher Shop (đ/đơn)', 'Shopee Xu (đ/đơn)',
@@ -34,7 +35,8 @@ function doPost(e) {
     switch (req.action) {
       case 'ping': return out_({ ok: true, version: SCRIPT_VERSION });
       case 'diag': return out_(diag_(props));
-      case 'list': return out_({ ok: true, rows: listRows_() });
+      case 'list': return out_({ ok: true, rows: listRows_(), shops: listShops_() });
+      case 'setShopLink': return out_(setShopLink_(req.shop, req.link));
       case 'extract': return out_({ ok: true, order: extract_(req.images || [], props) });
       case 'save': return out_(save_(req.order, !!req.replace, req.originalId));
       case 'delete': return out_(remove_(req.id));
@@ -81,6 +83,49 @@ function listRows_() {
     });
   }
   return rows;
+}
+
+/* ---------------- Link cửa hàng ---------------- */
+
+function listShops_() {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHOP_SHEET);
+  if (!sh || sh.getLastRow() < 2) return {};
+  const out = {};
+  sh.getRange(2, 1, sh.getLastRow() - 1, 2).getDisplayValues().forEach(function (r) {
+    const name = String(r[0]).trim(), link = String(r[1]).trim();
+    if (name && link) out[name] = link;
+  });
+  return out;
+}
+
+function setShopLink_(shop, link) {
+  shop = String(shop || '').trim();
+  link = String(link || '').trim();
+  if (!shop) return { ok: false, error: 'Thiếu tên shop.' };
+  if (link && !/^https?:\/\/\S+$/i.test(link)) return { ok: false, error: 'Link phải bắt đầu bằng http:// hoặc https://' };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sh = ss.getSheetByName(SHOP_SHEET);
+    if (!sh) {
+      sh = ss.insertSheet(SHOP_SHEET);
+      sh.getRange(1, 1, 1, 2).setValues([['Shop', 'Link']]).setFontWeight('bold').setBackground('#e8eef0');
+      sh.setFrozenRows(1);
+      sh.getRange('A:B').setNumberFormat('@');
+      sh.setColumnWidth(1, 240);
+      sh.setColumnWidth(2, 460);
+    }
+    const last = sh.getLastRow();
+    const names = last < 2 ? [] : sh.getRange(2, 1, last - 1, 1).getDisplayValues().map(function (r) { return String(r[0]).trim(); });
+    const i = names.indexOf(shop);
+    if (i !== -1 && link) sh.getRange(i + 2, 2).setValue(link);
+    else if (i !== -1) sh.deleteRow(i + 2);
+    else if (link) sh.appendRow([shop, link]);
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function deleteById_(sh, id) {

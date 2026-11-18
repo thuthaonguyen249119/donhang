@@ -106,6 +106,39 @@ nav button.on{color:var(--orange);background:rgba(255,153,0,.14)}
 @keyframes sp{to{transform:rotate(360deg)}}
 ol{padding-left:20px;margin:6px 0;font-size:14px} ol li{margin:5px 0} ol li::marker{color:var(--orange);font-weight:700}
 b{font-weight:700}
+/* Sổ đơn: lọc tháng, kết quả tìm, xem chi tiết */
+select{width:100%;padding:11px 36px 11px 13px;border:1px solid var(--line);border-radius:12px;font:inherit;color:var(--ink);
+  background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23FF9900' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 14px center;
+  -webkit-appearance:none;appearance:none}
+select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,153,0,.25)}
+option{background:#232F3E;color:#F2F2F2}
+.stat{font-size:13px;color:var(--muted);margin:-2px 4px 12px}
+.stat b{color:var(--orange)}
+.order .head{cursor:pointer}
+.hits{padding:0;overflow:hidden}
+.hit{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 6px 8px 16px;border-top:1px solid var(--line);font-size:14px}
+.hit:first-child{border-top:0}
+.hit b{color:var(--orange);font-variant-numeric:tabular-nums;white-space:nowrap}
+body.noscroll{overflow:hidden}
+#view{position:fixed;inset:0;z-index:8;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  background:linear-gradient(160deg, rgba(35,47,62,.93), rgba(0,0,0,.95));-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur)}
+.vwrap{max-width:640px;margin:0 auto;padding:0 14px calc(30px + env(safe-area-inset-bottom))}
+.vbar{position:sticky;top:0;z-index:1;margin:0 -14px 12px;padding:calc(6px + env(safe-area-inset-top)) 6px 6px;
+  background:rgba(35,47,62,.75);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-bottom:1px solid var(--line)}
+.kicker{display:block;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.card h2.vshop{font-size:20px;margin:2px 0 8px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13.5px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.shopbox{margin-top:14px}
+a.pri{display:flex;align-items:center;justify-content:center;text-decoration:none;min-height:52px;border-radius:13px;font-weight:800;letter-spacing:.05em}
+.hint2{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
+.vline{padding:12px 16px;border-top:1px solid var(--line);transition:background .4s}
+.vline.hl{background:rgba(255,153,0,.13);box-shadow:inset 3px 0 0 var(--orange)}
+.vname{font-weight:600}
+.vline small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.vgrid{display:grid;grid-template-columns:1fr auto;gap:3px 10px;font-size:13.5px;margin-top:8px;color:var(--muted);font-variant-numeric:tabular-nums}
+.vgrid span:nth-child(even){text-align:right;color:var(--ink)}
+.sec.danger{color:var(--bad);border-color:rgba(255,122,112,.5);background:rgba(255,122,112,.1)}
 /* Máy không hỗ trợ làm mờ nền: dùng kính đặc hơn để chữ vẫn dễ đọc */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   .card,header,nav,#toast{background:rgba(35,47,62,.92)}
@@ -168,12 +201,16 @@ b{font-weight:700}
   <!-- DANH SÁCH -->
   <section id="tab-list">
     <div class="bar">
-      <input type="search" id="q" placeholder="Tìm sản phẩm, shop, mã đơn…">
+      <input type="search" id="q" placeholder="Tìm theo tên sản phẩm…" aria-label="Tìm theo tên sản phẩm">
+    </div>
+    <div class="bar">
+      <select id="month" aria-label="Lọc theo tháng"><option value="all">Tất cả các tháng</option></select>
     </div>
     <div class="bar">
       <button class="sec" id="btnReload">↻ Tải lại</button>
       <button class="sec" id="btnXlsx">⬇ Tải Excel</button>
     </div>
+    <div class="stat" id="stat"></div>
     <div id="list"></div>
   </section>
 
@@ -211,6 +248,12 @@ b{font-weight:700}
   <button data-tab="list"><span>☰</span>Sổ đơn</button>
   <button data-tab="set"><span>⚙</span>Cài đặt</button>
 </nav>
+<div id="view" hidden role="dialog" aria-modal="true" aria-label="Chi tiết đơn hàng">
+  <div class="vwrap">
+    <div class="vbar"><button class="ghost" id="btnBack">← Quay lại Sổ đơn</button></div>
+    <div id="viewBody"></div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -380,18 +423,20 @@ $('#items').addEventListener('click', e => {
 });
 $('#btnAddItem').onclick = () => { draft.items.push({ ten: '', phanLoai: '', sl: 1, gia: 0 }); renderItems(); recalc(); };
 
+function sumHtml(c, o) {
+  return `<div><span>Tổng tiền hàng</span><span>${vnd(c.total)}</span></div>
+     <div><span>Shopee Voucher</span><span>−${vnd(o.sv)}</span></div>
+     <div><span>Voucher Shop</span><span>−${vnd(o.vs)}</span></div>
+     <div><span>Shopee Xu</span><span>−${vnd(o.xu)}</span></div>
+     <div class="big"><span>Thực trả cho hàng</span><span>${vnd(c.paid)}</span></div>`;
+}
 function recalc() {
   const c = compute(draft);
   $$('#items [data-unit]').forEach((el, k) => {
     const l = c.lines[k];
     el.textContent = l && l.line > 0 ? vnd(l.unit) + (draft.items[k].sl > 1 ? ' / món' : '') : '—';
   });
-  $('#sum').innerHTML =
-    `<div><span>Tổng tiền hàng</span><span>${vnd(c.total)}</span></div>
-     <div><span>Shopee Voucher</span><span>−${vnd(draft.sv)}</span></div>
-     <div><span>Voucher Shop</span><span>−${vnd(draft.vs)}</span></div>
-     <div><span>Shopee Xu</span><span>−${vnd(draft.xu)}</span></div>
-     <div class="big"><span>Thực trả cho hàng</span><span>${vnd(c.paid)}</span></div>`;
+  $('#sum').innerHTML = sumHtml(c, draft);
   let h = '';
   if (c.paid >= 0 && c.lines.some(l => l.line > 0 && l.net < 0)) h += '<div class="note warn">Có món rẻ hơn phần voucher chia đều nên đơn giá ra số âm. Tổng cả đơn vẫn đúng.</div>';
   if (c.paid < 0) h += '<div class="note bad">Tổng giảm lớn hơn tiền hàng. Kiểm tra lại voucher và giá.</div>';
@@ -426,47 +471,206 @@ $('#btnSave').onclick = async () => {
 };
 
 /* ---------- Sổ đơn ---------- */
-let rows = null;
+let rows = null, shops = {}, shopsOk = false, viewing = null;
+
+// "dd/mm/yyyy", "dd-mm-yyyy hh:mm", "yyyy-mm-dd"… → số yyyymmdd để so sánh; 0 nếu không đọc được.
+function dateKey(s) {
+  s = String(s || '');
+  let m = s.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/), y, mo, d;
+  if (m) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else if ((m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/))) { d = +m[1]; mo = +m[2]; y = +m[3]; if (y < 100) y += 2000; }
+  else return 0;
+  return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? y * 10000 + mo * 100 + d : 0;
+}
+const monthOf = k => Math.floor(k / 100);                         // yyyymm
+const monthLabel = ym => 'Tháng ' + (ym % 100) + '/' + Math.floor(ym / 100);
+// Bỏ dấu tiếng Việt để tìm "binh giu nhiet" vẫn ra "Bình giữ nhiệt"
+const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+const safeUrl = u => { u = String(u || '').trim(); return /^https?:\/\/\S+$/i.test(u) ? u : ''; };
+
 function group(rs) {
   const map = new Map();
-  rs.forEach(r => {
-    if (!map.has(r.maDon)) map.set(r.maDon, { maDon: r.maDon, ngay: r.ngay, shop: r.shop, sv: r.sv, vs: r.vs, xu: r.xu, items: [] });
+  rs.forEach((r, i) => {
+    if (!map.has(r.maDon)) map.set(r.maDon, { maDon: r.maDon, ngay: r.ngay, shop: r.shop, sv: r.sv, vs: r.vs, xu: r.xu,
+      items: [], seq: i, key: dateKey(r.ngay) });
     map.get(r.maDon).items.push({ ten: r.ten, phanLoai: r.phanLoai, sl: r.sl, gia: r.gia });
   });
-  return Array.from(map.values()).reverse();   // đơn mới nhất lên đầu
+  return Array.from(map.values());
+}
+// Ngày đặt mới nhất lên đầu; cùng ngày thì đơn nhập sau lên trước; đơn chưa có ngày nằm cuối.
+const sorted = rs => group(rs).sort((a, b) => (b.key - a.key) || (b.seq - a.seq));
+const findOrder = id => group(rows || []).find(o => o.maDon === id);
+
+async function fetchList() {
+  const j = await api('list');
+  rows = j.rows; shopsOk = !!j.shops; shops = j.shops || {};
+  return rows;
 }
 async function loadList() {
-  $('#list').innerHTML = '<div class="empty">Đang tải…</div>';
-  try { rows = (await api('list')).rows; renderList(); }
+  $('#list').innerHTML = '<div class="empty">Đang tải…</div>'; $('#stat').textContent = '';
+  try { await fetchList(); fillMonths(); renderList(); if (viewing) renderView(); }
   catch (er) { $('#list').innerHTML = '<div class="empty">' + esc(er.message) + '</div>'; }
 }
+
+// Lọc theo tháng dương lịch: từ ngày 1 đến ngày cuối tháng (28/29/30/31), không phải "30 ngày gần nhất".
+function fillMonths() {
+  const sel = $('#month'), cur = sel.value || 'all', orders = group(rows || []);
+  const months = [...new Set(orders.filter(o => o.key).map(o => monthOf(o.key)))].sort((a, b) => b - a);
+  const opts = [['all', 'Tất cả các tháng']].concat(months.map(m => [String(m), monthLabel(m)]));
+  if (orders.some(o => !o.key)) opts.push(['none', 'Chưa có ngày đặt']);
+  sel.innerHTML = opts.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('');
+  sel.value = opts.some(o => o[0] === cur) ? cur : 'all';
+}
+function inMonth(orders) {
+  const mv = $('#month').value || 'all';
+  if (mv === 'all') return orders;
+  if (mv === 'none') return orders.filter(o => !o.key);
+  return orders.filter(o => o.key && String(monthOf(o.key)) === mv);
+}
+
 function renderList() {
-  const q = $('#q').value.trim().toLowerCase();
-  let orders = group(rows || []);
-  if (q) orders = orders.filter(o => (o.maDon + ' ' + o.shop + ' ' + o.items.map(i => i.ten + ' ' + i.phanLoai).join(' ')).toLowerCase().includes(q));
-  if (!orders.length) { $('#list').innerHTML = '<div class="empty">' + (q ? 'Không tìm thấy.' : 'Chưa có đơn nào. Hãy thêm đơn đầu tiên.') + '</div>'; return; }
+  if (!rows) return;
+  const orders = inMonth(sorted(rows)), q = fold($('#q').value.trim());
+  if (q) return renderHits(orders, q);
+  const total = orders.reduce((s, o) => s + compute(o).paid, 0);
+  $('#stat').innerHTML = orders.length ? `${orders.length} đơn · Thực trả <b>${vnd(total)}</b>` : '';
+  if (!orders.length) {
+    $('#list').innerHTML = '<div class="empty">' + (rows.length ? 'Không có đơn nào trong tháng này.' : 'Chưa có đơn nào. Hãy thêm đơn đầu tiên.') + '</div>';
+    return;
+  }
   $('#list').innerHTML = orders.map(o => {
     const c = compute(o);
     return `<div class="card order">
-      <div class="head"><div><b>${esc(o.shop || '(chưa có tên shop)')}</b><small>${esc(o.maDon)}${o.ngay ? ' · ' + esc(o.ngay) : ''}</small></div>
+      <div class="head" data-view="${esc(o.maDon)}"><div><b>${esc(o.shop || '(chưa có tên shop)')}</b><small>${o.ngay ? esc(o.ngay) + ' · ' : ''}${esc(o.maDon)}</small></div>
         <div class="paid">${vnd(c.paid)}</div></div>
       ${o.items.map((it, k) => `<div class="line">
         <span>${esc(it.ten)}${it.sl > 1 ? ' ×' + it.sl : ''}</span><small>${esc(it.phanLoai)}</small>
         <div class="u"><b>${vnd(c.lines[k].unit)}</b><s>${vnd(it.gia)}</s></div></div>`).join('')}
-      <div class="acts"><button class="ghost" data-edit="${esc(o.maDon)}">Sửa</button>
+      <div class="acts"><button class="ghost" data-view="${esc(o.maDon)}">Xem</button>
+        <button class="ghost" data-edit="${esc(o.maDon)}">Sửa</button>
         <button class="ghost danger" data-rm="${esc(o.maDon)}">Xoá</button></div></div>`;
   }).join('');
 }
+
+// Tìm theo tên sản phẩm: chỉ hiện tên + đơn giá thực tế, bấm Xem để mở cả đơn.
+function renderHits(orders, q) {
+  const words = q.split(/\s+/), hits = [];
+  orders.forEach(o => {
+    const c = compute(o);
+    o.items.forEach((it, k) => { const n = fold(it.ten); if (words.every(w => n.includes(w))) hits.push({ o, k, ten: it.ten, unit: c.lines[k].unit }); });
+  });
+  const scope = $('#month').value === 'all' ? '' : ' trong ' + $('#month').selectedOptions[0].textContent.toLowerCase();
+  $('#stat').innerHTML = hits.length ? `${hits.length} sản phẩm khớp${esc(scope)}` : '';
+  if (!hits.length) { $('#list').innerHTML = '<div class="empty">Không tìm thấy sản phẩm nào' + esc(scope) + '.</div>'; return; }
+  $('#list').innerHTML = '<div class="card hits">' + hits.map(h => `<div class="hit">
+      <span>${esc(h.ten)}</span><b>${vnd(h.unit)}</b>
+      <button class="ghost" data-view="${esc(h.o.maDon)}" data-k="${h.k}">Xem</button></div>`).join('') + '</div>';
+}
+
 $('#q').oninput = renderList;
+$('#month').onchange = renderList;
 $('#btnReload').onclick = loadList;
-$('#list').addEventListener('click', async e => {
-  const ed = e.target.dataset.edit, rm = e.target.dataset.rm;
-  if (ed) { const o = group(rows).find(x => x.maDon === ed); if (o) openForm(o, o.maDon); }
-  if (rm && confirm('Xoá đơn ' + rm + ' khỏi Google Sheets?')) {
-    try { await api('delete', { id: rm }); rows = rows.filter(r => r.maDon !== rm); renderList(); toast('Đã xoá.'); }
-    catch (er) { toast(er.message); }
-  }
+function onOrderAction(e) {
+  const t = e.target.closest('[data-view],[data-edit],[data-rm]');
+  if (!t) return;
+  if (t.dataset.view != null) openView(t.dataset.view, t.dataset.k);
+  else if (t.dataset.edit != null) editOrder(t.dataset.edit);
+  else if (t.dataset.rm != null) removeOrder(t.dataset.rm);
+}
+$('#list').addEventListener('click', onOrderAction);
+
+function editOrder(id) { const o = findOrder(id); if (!o) return; closeView(); openForm(o, o.maDon); }
+async function removeOrder(id) {
+  if (!confirm('Xoá đơn ' + id + ' khỏi Google Sheets?')) return;
+  try {
+    await api('delete', { id });
+    rows = rows.filter(r => r.maDon !== id);
+    if (viewing && viewing.id === id) closeView();
+    fillMonths(); renderList(); toast('Đã xoá.');
+  } catch (er) { toast(er.message); }
+}
+
+/* ---------- Xem toàn bộ đơn ---------- */
+function openView(id, k) {
+  viewing = { id, k: k == null || k === '' ? -1 : +k, editLink: false, msg: '' };
+  renderView();
+  if (!viewing) return;
+  const v = $('#view');
+  v.hidden = false; v.scrollTop = 0; document.body.classList.add('noscroll');
+  try { history.pushState({ view: 1 }, ''); } catch (e) {}
+  const hl = $('#viewBody .vline.hl');
+  if (hl) hl.scrollIntoView({ block: 'center' });
+}
+function closeView(fromHistory) {
+  if ($('#view').hidden) return;
+  $('#view').hidden = true; viewing = null; document.body.classList.remove('noscroll');
+  if (!fromHistory && history.state && history.state.view) history.back();
+}
+window.addEventListener('popstate', () => closeView(true));   // nút Back của điện thoại đóng màn Xem
+$('#btnBack').onclick = () => closeView();
+
+function renderView() {
+  const o = viewing && findOrder(viewing.id);
+  if (!o) { closeView(); return; }
+  const c = compute(o), shop = String(o.shop || '').trim(), link = safeUrl(shops[shop]);
+  let box;
+  if (!shop) box = '<div class="note warn">Đơn này chưa có tên shop. Bấm "Sửa đơn" để thêm tên shop rồi mới gắn link được.</div>';
+  else if (!shopsOk) box = '<div class="note warn">' + esc(OLD_SCRIPT) + '</div>';
+  else if (link && !viewing.editLink) box = `<a class="pri" href="${esc(link)}" target="_blank" rel="noopener noreferrer">ĐI ĐẾN CỬA HÀNG ↗</a>
+      <button class="ghost" data-act="editLink" style="width:100%;margin-top:4px">Sửa link cửa hàng</button>`;
+  else box = `<label for="shopLink">Link cửa hàng</label>
+      <input type="url" id="shopLink" inputmode="url" placeholder="Dán link shop, ví dụ https://shopee.vn/ten-shop" value="${esc(link)}">
+      <button class="sec" data-act="saveLink" style="margin-top:10px">Lưu link</button>
+      ${link ? '<button class="ghost danger" data-act="delLink" style="width:100%;margin-top:4px">Xoá link</button>' : ''}
+      <small class="hint2">Link gắn theo tên shop: mọi đơn của “${esc(shop)}” đều dùng chung.</small>`;
+  $('#viewBody').innerHTML = `
+    <div class="card">
+      <span class="kicker">Cửa hàng</span>
+      <h2 class="vshop">${esc(o.shop || '(chưa có tên shop)')}</h2>
+      <div class="meta"><span>Ngày đặt: <b>${esc(o.ngay || '—')}</b></span><span>Mã đơn: <b>${esc(o.maDon)}</b></span></div>
+      <div class="shopbox">${box}<div id="linkMsg">${viewing.msg}</div></div>
+    </div>
+    <div class="card order">
+      <div class="head"><b>${o.items.length} sản phẩm</b></div>
+      ${o.items.map((it, k) => { const l = c.lines[k]; return `<div class="vline${k === viewing.k ? ' hl' : ''}">
+        <div class="vname">${esc(it.ten)}</div>${it.phanLoai ? `<small>Phân loại: ${esc(it.phanLoai)}</small>` : ''}
+        <div class="vgrid">
+          <span>Số lượng</span><span>${it.sl}</span>
+          <span>Giá mua</span><span>${vnd(it.gia)} / món</span>
+          <span>Voucher chia đều</span><span>−${vnd(l.voucher)}</span>
+          <span>Xu chia đều</span><span>−${vnd(l.xu)}</span>
+          <span>Thành tiền thực trả</span><span>${vnd(l.net)}</span>
+        </div>
+        <div class="calc"><span>Đơn giá thực tế sau giảm</span><b>${vnd(l.unit)}${it.sl > 1 ? ' / món' : ''}</b></div></div>`; }).join('')}
+    </div>
+    <div class="card"><h2>Tổng đơn</h2><div class="sum">${sumHtml(c, o)}</div></div>
+    <div class="bar"><button class="sec" data-edit="${esc(o.maDon)}">Sửa đơn</button>
+      <button class="sec danger" data-rm="${esc(o.maDon)}">Xoá đơn</button></div>`;
+}
+$('#viewBody').addEventListener('click', e => {
+  const a = e.target.closest('[data-act]');
+  if (!a) return onOrderAction(e);
+  const o = findOrder(viewing.id), shop = String(o.shop || '').trim();
+  if (a.dataset.act === 'editLink') { viewing.editLink = true; viewing.msg = ''; renderView(); $('#shopLink').focus(); }
+  if (a.dataset.act === 'saveLink') saveShopLink(shop, $('#shopLink').value, a);
+  if (a.dataset.act === 'delLink' && confirm('Xoá link của shop "' + shop + '"?')) saveShopLink(shop, '', a);
 });
+async function saveShopLink(shop, raw, btn) {
+  let link = String(raw || '').trim();
+  if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+  if (link && !safeUrl(link)) { $('#linkMsg').innerHTML = '<div class="note bad">Link không hợp lệ.</div>'; return; }
+  if (!link && btn.dataset.act === 'saveLink') { $('#linkMsg').innerHTML = '<div class="note bad">Hãy dán link cửa hàng trước.</div>'; return; }
+  busy(btn, true, 'Đang lưu…');
+  try {
+    await api('setShopLink', { shop, link });
+    if (link) shops[shop] = link; else delete shops[shop];
+    viewing.editLink = false; viewing.msg = '';
+    renderView(); toast(link ? 'Đã lưu link cửa hàng.' : 'Đã xoá link.');
+  } catch (er) {
+    busy(btn, false);
+    $('#linkMsg').innerHTML = '<div class="note bad">' + esc(er.message === 'Lệnh không hợp lệ.' ? OLD_SCRIPT : er.message) + '</div>';
+  }
+}
 
 /* ---------- Tải Excel (đúng bố cục bảng gốc, có công thức) ---------- */
 function buildSheetAoa(rs) {
@@ -498,7 +702,7 @@ function loadScript(src) {
 $('#btnXlsx').onclick = async () => {
   const b = $('#btnXlsx'); busy(b, true, 'Đang tạo…');
   try {
-    if (!rows) rows = (await api('list')).rows;
+    if (!rows) await fetchList();
     if (!rows.length) throw new Error('Chưa có dữ liệu để tải.');
     if (!window.XLSX) await loadScript('https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js');
     const ws = XLSX.utils.aoa_to_sheet(buildSheetAoa(rows));
