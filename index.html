@@ -86,6 +86,8 @@ button:disabled{opacity:.45;box-shadow:none;cursor:default}
 .line .u b{display:block;color:var(--orange);font-variant-numeric:tabular-nums} .line .u s{color:var(--muted);font-size:12px}
 .acts{display:flex;justify-content:flex-end;border-top:1px solid var(--line);background:rgba(0,0,0,.18)}
 .bar{display:flex;gap:8px;margin-bottom:12px}
+.hint{margin:0 0 12px;font-size:13px;color:var(--muted)}
+.note b{display:block;margin-bottom:2px}
 .empty{text-align:center;color:var(--muted);padding:34px 10px}
 nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));max-width:616px;margin:0 auto;display:flex;z-index:6;
   background:rgba(35,47,62,.6);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
@@ -185,6 +187,12 @@ b{font-weight:700}
       <input type="password" id="setPin" autocomplete="off">
       <button class="pri" id="btnSaveSet" style="margin-top:14px">Lưu và kiểm tra kết nối</button>
       <div id="setMsg"></div>
+    </div>
+    <div class="card">
+      <h2>Kiểm tra chức năng đọc ảnh</h2>
+      <p class="hint">Bấm để Apps Script tự kiểm tra phiên bản, API key Gemini và gọi thử Gemini. Không cần ảnh.</p>
+      <button class="sec" id="btnDiag">Chẩn đoán đọc ảnh</button>
+      <div id="diagMsg"></div>
     </div>
     <div class="card">
       <h2>Cách hoạt động</h2>
@@ -307,7 +315,7 @@ $('#btnRead').onclick = async () => {
     clearImages();
     toast('Đã điền xong. Hãy kiểm tra lại các con số.');
     return;
-  } catch (er) { showReadErr(er.message); }
+  } catch (er) { showReadErr(er.message === 'Lệnh không hợp lệ.' ? OLD_SCRIPT : er.message + ' (Vào Cài đặt > Chẩn đoán đọc ảnh để xem chi tiết.)'); }
   busy(b, false);
 };
 $('#btnManual').onclick = () => openForm({ items: [{}] }, null);
@@ -506,6 +514,20 @@ $('#btnSaveSet').onclick = async () => {
   const b = $('#btnSaveSet'); busy(b, true, 'Đang kiểm tra…');
   try { await api('ping'); $('#setMsg').innerHTML = '<div class="note ok">Kết nối thành công.</div>'; rows = null; }
   catch (er) { $('#setMsg').innerHTML = '<div class="note bad">' + esc(er.message) + '</div>'; }
+  busy(b, false);
+};
+const OLD_SCRIPT = 'Apps Script trên Google đang là BẢN CŨ (chưa có chức năng này). Chép lại toàn bộ mã mới vào trình soạn Apps Script, bấm Lưu, rồi Deploy > Manage deployments > biểu tượng bút chì > Version: New version > Deploy. Địa chỉ /exec giữ nguyên.';
+$('#btnDiag').onclick = async () => {
+  const b = $('#btnDiag'), box = $('#diagMsg');
+  busy(b, true, 'Đang kiểm tra…'); box.innerHTML = '';
+  try {
+    const j = await api('diag');
+    box.innerHTML = j.checks.map(c => `<div class="note ${c.ok ? 'ok' : 'bad'}"><b>${c.ok ? '✓' : '✗'} ${esc(c.name)}</b>${esc(c.detail)}</div>`).join('');
+  } catch (er) {
+    const msg = er.message === 'Lệnh không hợp lệ.' ? OLD_SCRIPT
+      : er.code === 'PIN' ? 'Sai mã PIN: PIN ở ô trên phải giống hệt APP_PIN trong Script Properties.' : er.message;
+    box.innerHTML = '<div class="note bad"><b>✗ Không kiểm tra được</b>' + esc(msg) + '</div>';
+  }
   busy(b, false);
 };
 if (!cfg.url) go('set');

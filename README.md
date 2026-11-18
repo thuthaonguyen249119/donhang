@@ -11,6 +11,7 @@
  *   GEMINI_MODEL    tên model, mặc định "gemini-flash-latest"
  */
 
+const SCRIPT_VERSION = '2026-11-18';   // app dùng số này để biết Apps Script có phải bản mới nhất
 const SHEET_NAME = 'Đơn hàng';
 const HEADERS = [
   'Mã đơn', 'Ngày đặt', 'Shop', 'Tên sản phẩm', 'Phân loại', 'SL', 'Giá mua (đ/món)',
@@ -32,7 +33,8 @@ function doPost(e) {
     if (String(req.pin || '') !== pin) return out_({ ok: false, code: 'PIN', error: 'Sai mã PIN.' });
 
     switch (req.action) {
-      case 'ping': return out_({ ok: true });
+      case 'ping': return out_({ ok: true, version: SCRIPT_VERSION });
+      case 'diag': return out_(diag_(props));
       case 'list': return out_({ ok: true, rows: listRows_() });
       case 'extract': return out_({ ok: true, order: extract_(req.images || [], props) });
       case 'save': return out_(save_(req.order, !!req.replace, req.originalId));
@@ -178,7 +180,7 @@ const PROMPT = [
 ].join('\n');
 
 function extract_(images, props) {
-  const key = props.getProperty('GEMINI_API_KEY');
+  const key = String(props.getProperty('GEMINI_API_KEY') || '').trim();   // bỏ khoảng trắng/xuống dòng lỡ dán thừa
   if (!key) throw new Error('Chưa đặt GEMINI_API_KEY trong Script Properties.');
   if (!images.length) throw new Error('Chưa có ảnh.');
   const parts = [{ text: PROMPT }];
@@ -187,7 +189,7 @@ function extract_(images, props) {
   });
   const body = { contents: [{ parts: parts }], generationConfig: { responseMimeType: 'application/json' } };
 
-  let model = props.getProperty('GEMINI_MODEL') || 'gemini-flash-latest';
+  let model = String(props.getProperty('GEMINI_MODEL') || '').trim() || 'gemini-flash-latest';
   let res = callGemini_(model, key, body);
   if (res.getResponseCode() === 404) {            // tên model đã đổi: tự tìm model flash đang có
     model = pickModel_(key);
@@ -195,8 +197,7 @@ function extract_(images, props) {
   }
   const code = res.getResponseCode();
   const text = res.getContentText();
-  if (code === 429) throw new Error('Gemini báo hết lượt miễn phí tạm thời, thử lại sau ít phút.');
-  if (code !== 200) throw new Error('Gemini lỗi ' + code + ': ' + text.slice(0, 300));
+  if (code !== 200) throw new Error(explainGemini_(code, text));
 
   const data = JSON.parse(text);
   const cand = data.candidates && data.candidates[0];
@@ -245,6 +246,61 @@ function pickModel_(key) {
     .sort().reverse();
   if (!names.length) throw new Error('Không tìm thấy model Gemini Flash nào. Hãy đặt GEMINI_MODEL trong Script Properties.');
   return names[0];
+}
+
+/** Dịch mã lỗi Gemini thành hướng dẫn dễ hiểu. */
+function explainGemini_(code, text) {
+  let msg = '';
+  try { msg = (JSON.parse(text).error || {}).message || ''; } catch (e) { msg = String(text || '').slice(0, 200); }
+  if (/API key not valid|API_KEY_INVALID/i.test(msg)) return 'API key Gemini sai hoặc đã bị xoá. Tạo key mới tại aistudio.google.com/app/apikey rồi dán lại vào GEMINI_API_KEY.';
+  if (/location is not supported/i.test(msg)) return 'Gemini chưa hỗ trợ miễn phí ở khu vực của tài khoản/máy chủ này (' + msg + ').';
+  if (code === 403) return 'Key bị từ chối (403): có thể key bị giới hạn, project chưa bật Generative Language API hoặc bị khoá. Thử tạo key mới trong AI Studio. Chi tiết: ' + msg;
+  if (code === 429) return /limit: 0/.test(msg)
+    ? 'Model này không có lượt miễn phí cho key của bạn (limit 0). Đặt GEMINI_MODEL = gemini-2.5-flash trong Script Properties, hoặc bật thanh toán cho project.'
+    : 'Gemini báo hết lượt miễn phí tạm thời, thử lại sau ít phút.';
+  if (code === 404) return 'Không tìm thấy model Gemini. Xoá GEMINI_MODEL trong Script Properties để script tự chọn model. Chi tiết: ' + msg;
+  return 'Gemini lỗi ' + code + ': ' + msg;
+}
+
+/** Tự chẩn đoán: app gọi lệnh "diag" để biết hỏng ở bước nào. */
+function diag_(props) {
+  const checks = [];
+  function add(ok, name, detail) { checks.push({ ok: ok, name: name, detail: detail || '' }); }
+  function done() { return { ok: true, version: SCRIPT_VERSION, checks: checks }; }
+
+  add(true, 'Apps Script', 'Đang chạy bản ' + SCRIPT_VERSION + ', mã PIN đúng.');
+  try { sheet_(); add(true, 'Google Sheet', 'Ghi được vào sheet "' + SHEET_NAME + '".'); }
+  catch (e) { add(false, 'Google Sheet', String(e && e.message || e)); }
+
+  const raw = props.getProperty('GEMINI_API_KEY');
+  const key = String(raw || '').trim();
+  if (!key) { add(false, 'GEMINI_API_KEY', 'Chưa đặt trong Project Settings > Script Properties.'); return done(); }
+  add(/^AIza/.test(key), 'GEMINI_API_KEY',
+    'Đã đặt: ' + key.slice(0, 4) + '…' + key.slice(-4) + ' (' + key.length + ' ký tự).' +
+    (raw !== key ? ' Có khoảng trắng thừa, script đã tự bỏ.' : '') +
+    (/^AIza/.test(key) ? '' : ' Key Gemini thường bắt đầu bằng "AIza" và dài 39 ký tự: có thể bạn dán nhầm.'));
+
+  let model = String(props.getProperty('GEMINI_MODEL') || '').trim() || 'gemini-flash-latest';
+  const body = { contents: [{ parts: [{ text: 'Trả về đúng JSON {"ok":true}' }] }],
+    generationConfig: { responseMimeType: 'application/json' } };
+  let res, t0 = Date.now();
+  try { res = callGemini_(model, key, body); }
+  catch (e) {
+    add(false, 'Quyền gọi Gemini', String(e && e.message || e) +
+      ' → Trong trình soạn Apps Script, chọn hàm caiDat, bấm Chạy và cấp quyền, rồi Deploy > Manage deployments > Edit > New version.');
+    return done();
+  }
+  if (res.getResponseCode() === 404) {
+    try {
+      const alt = pickModel_(key);
+      add(false, 'Model', '"' + model + '" không tồn tại, script tự chuyển sang "' + alt + '". Nên xoá hoặc sửa GEMINI_MODEL.');
+      model = alt; t0 = Date.now(); res = callGemini_(model, key, body);
+    } catch (e) { add(false, 'Model', String(e && e.message || e)); return done(); }
+  }
+  const code = res.getResponseCode();
+  if (code === 200) add(true, 'Gọi thử Gemini', 'Model ' + model + ' trả lời sau ' + ((Date.now() - t0) / 1000).toFixed(1) + ' giây. Đọc ảnh sẽ hoạt động.');
+  else add(false, 'Gọi thử Gemini', 'Model ' + model + ': ' + explainGemini_(code, res.getContentText()));
+  return done();
 }
 
 /** Chạy hàm này 1 lần trong trình soạn Apps Script để cấp quyền và tạo sheet. */
